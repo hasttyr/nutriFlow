@@ -77,3 +77,17 @@ The product detail page allows users to:
 The cart and checkout show the total calories of the whole order.
 
 > Checkout is a demo: no payment is processed and card data is never stored.
+
+## Image credits
+
+All photos are CC0 / public domain (no attribution required), found via [Openverse](https://openverse.org) and stored in `public/images/`:
+
+| File | Source |
+| --- | --- |
+| `granola.jpg` | StockSnap "Muesli Granola" (IG3CNZ7B8L) |
+| `protein-bar.webp` | rawpixel "Free yogurt energy bar image" |
+| `juice.webp` | rawpixel "Free lemon juice glass image" |
+| `bread.jpg` | Wikimedia Commons "Cut rye bread Kartoffelkruste 2025-02-20 02" |
+| `yogurt.webp` | rawpixel "Free healthy yogurt bowl image" |
+| `almond-butter.webp` | rawpixel peanut butter jar (stand-in for almond butter) |
+| `backdrop-produce.jpg` | StockSnap "Fruit Vegetables" (F8B73CPSBK) |

@@ -8,7 +8,7 @@ const products = [
     },
     price: 5.99,
     calories: 450,
-    image: '/images/granola.svg'
+    image: '/images/granola.jpg'
   },
   {
     id: 2,
@@ -19,7 +19,7 @@ const products = [
     },
     price: 2.99,
     calories: 220,
-    image: '/images/protein-bar.svg'
+    image: '/images/protein-bar.webp'
   },
   {
     id: 3,
@@ -30,7 +30,7 @@ const products = [
     },
     price: 4.49,
     calories: 180,
-    image: '/images/juice.svg'
+    image: '/images/juice.webp'
   },
   {
     id: 4,
@@ -41,7 +41,7 @@ const products = [
     },
     price: 3.49,
     calories: 320,
-    image: '/images/bread.svg'
+    image: '/images/bread.jpg'
   },
   {
     id: 5,
@@ -52,7 +52,7 @@ const products = [
     },
     price: 2.79,
     calories: 150,
-    image: '/images/yogurt.svg'
+    image: '/images/yogurt.webp'
   },
   {
     id: 6,
@@ -63,7 +63,7 @@ const products = [
     },
     price: 4.99,
     calories: 190,
-    image: '/images/almond-butter.svg'
+    image: '/images/almond-butter.webp'
   }
 ];
 

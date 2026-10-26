@@ -36,7 +36,7 @@ describe('App', () => {
     renderApp('/products');
     expect(screen.getAllByRole('link', { name: /view details for/i })).toHaveLength(6);
     expect(screen.getByText('$5.99')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Almond Butter' })).toHaveAttribute('src', '/images/almond-butter.svg');
+    expect(screen.getByRole('img', { name: 'Almond Butter' })).toHaveAttribute('src', '/images/almond-butter.webp');
   });
 
   it('adds a product to the cart from its detail page', async () => {
