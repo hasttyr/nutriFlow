@@ -13,9 +13,7 @@ export const glassButton = `inline-flex items-center justify-center gap-2 rounde
 // Round glass button for steppers and icon actions.
 export const iconButton = `inline-flex size-11 items-center justify-center rounded-full border border-white/70 bg-white/50 text-ink shadow-glass-sm backdrop-blur-xl hover:bg-white/80 ${pressable}`;
 
-export const textLink = `rounded-full underline-offset-4 hover:underline ${focusRing}`;
 
-export const calorieChip = 'inline-flex shrink-0 items-center whitespace-nowrap gap-1 rounded-full bg-citrus-100/85 px-3 py-1 text-sm font-semibold text-citrus-800 tabular-nums ring-1 ring-citrus-300/70 ring-inset';
 
 export const fieldLabel = 'mb-1.5 block text-sm font-medium text-ink/80';
 

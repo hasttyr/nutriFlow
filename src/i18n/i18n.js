@@ -3,8 +3,8 @@ import messages from './messages';
 export const LOCALES = ['es', 'en'];
 export const STORAGE_KEY = 'nutriflow/locale';
 
-// Prices are in US dollars; es-MX spells that out ("USD 5.99") so it never reads as pesos.
-const intlTags = { en: 'en-US', es: 'es-MX' };
+// Prices are Colombian pesos without decimals: "$ 12.900" in Spanish, "COP 12,900" in English.
+const intlTags = { en: 'en-US', es: 'es-CO' };
 
 const isLocale = (value) => LOCALES.includes(value);
 
@@ -34,9 +34,12 @@ export const createTranslator = (locale) => {
   const tag = intlTags[locale];
   const pluralRules = new Intl.PluralRules(tag);
   const numberFormat = new Intl.NumberFormat(tag);
-  const priceFormat = new Intl.NumberFormat(tag, { style: 'currency', currency: 'USD' });
+  const priceFormat = new Intl.NumberFormat(tag, { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+
+  const timeFormat = new Intl.DateTimeFormat(tag, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   const formatNumber = (value) => numberFormat.format(value);
+  const formatTime = (timestamp) => timeFormat.format(timestamp);
   const formatPrice = (amount) => priceFormat.format(amount);
 
   const t = (key, vars = {}) => {
@@ -55,5 +58,5 @@ export const createTranslator = (locale) => {
   // Picks the current language from a { en, es } record, e.g. a product name.
   const localize = (record) => record[locale] ?? record.en;
 
-  return { locale, t, localize, formatNumber, formatPrice };
+  return { locale, t, localize, formatNumber, formatPrice, formatTime };
 };

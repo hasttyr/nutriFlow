@@ -1,73 +1,129 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { CircleCheck, Flame, Info, Lock, PackageOpen } from 'lucide-react';
+import { CircleCheck, CircleX, Info, PackageOpen, Store, Truck } from 'lucide-react';
 import { useCart } from '../cart/useCart';
-import { TAX_RATE } from '../cart/cart';
+import { deliveryFee } from '../cart/cart';
+import { NODES, getNode } from '../distributed/cluster';
+import { missingAt, priceAt } from '../distributed/inventory';
+import { QUORUM, placeOrder } from '../distributed/orders';
+import { useCluster } from '../distributed/hooks';
 import { useLocale } from '../i18n/useLocale';
+import TraceList from '../components/TraceList';
 import Glass from '../ui/Glass';
+import StatusDot from '../ui/StatusDot';
 import { fieldInput, fieldLabel, pageHeading, primaryButton, sectionHeading } from '../ui/classes';
 
-const initialFormData = {
-  firstName: '',
-  lastName: '',
-  email: '',
-  address: '',
-  city: '',
-  zipCode: '',
-  cardNumber: '',
-  expiryDate: '',
-  cvv: ''
-};
+const initialForm = { name: '', phone: '', address: '', neighborhood: '', notes: '' };
+
+const optionCard = 'flex min-h-11 cursor-pointer items-start gap-3 rounded-2xl bg-white/50 p-4 ring-1 ring-white/80 transition ring-inset hover:bg-white/70 has-checked:bg-white/85 has-checked:ring-2 has-checked:ring-citrus-500';
 
 const Field = ({ id, label, className = '', ...inputProps }) => (
   <div className={className}>
     <label htmlFor={id} className={fieldLabel}>{label}</label>
-    <input id={id} name={id} className={fieldInput} required {...inputProps} />
+    <input id={id} name={id} className={fieldInput} {...inputProps} />
   </div>
 );
 
 const Checkout = () => {
-  const { items, totalCalories, subtotal, tax, total, clearCart } = useCart();
+  const { items, clearCart } = useCart();
+  const { activeNodeId, nodes } = useCluster();
   const { t, localize, formatPrice } = useLocale();
-  const [formData, setFormData] = useState(initialFormData);
-  const [placedOrder, setPlacedOrder] = useState(null);
+  const [fulfillment, setFulfillment] = useState('delivery');
+  const [pickupNodeId, setPickupNodeId] = useState(activeNodeId);
+  const [payment, setPayment] = useState('cash');
+  const [form, setForm] = useState(initialForm);
+  const [phase, setPhase] = useState('form');
+  const [trace, setTrace] = useState([]);
+  const [outcome, setOutcome] = useState(null);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // Prices belong to the branch that will serve the order.
+  const pricingNodeId = fulfillment === 'pickup' ? pickupNodeId : activeNodeId;
+  const lines = items.map((item) => ({ ...item, price: priceAt(pricingNodeId, item) }));
+  const subtotal = lines.reduce((total, line) => total + line.price * line.quantity, 0);
+  const fee = deliveryFee(subtotal, fulfillment);
+  const orderItems = items.map(({ id, quantity }) => ({ id, quantity }));
+
+  const fieldProps = (id) => ({
+    id,
+    value: form[id],
+    onChange: (event) => setForm((current) => ({ ...current, [id]: event.target.value })),
+    label: t(`checkout.${id}`)
+  });
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setTrace([]);
+    setPhase('processing');
+    try {
+      const order = await placeOrder({ items: orderItems, fulfillment, nodeId: pricingNodeId }, setTrace);
+      // The total is recomputed at the branch that actually took the order (it may have failed over).
+      const orderSubtotal = items.reduce((total, item) => total + priceAt(order.nodeId, item) * item.quantity, 0);
+      setOutcome({ order, requestedNodeId: pricingNodeId, total: orderSubtotal + deliveryFee(orderSubtotal, fulfillment) });
+      clearCart();
+      setPhase('done');
+    } catch (error) {
+      setOutcome({ error });
+      setPhase('error');
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Demo only: in a real app this would go to a payment provider; card data is never stored.
-    setPlacedOrder({ email: formData.email, total, totalCalories });
-    setFormData(initialFormData);
-    clearCart();
-  };
-
-  const fieldProps = (id) => ({ id, value: formData[id], onChange: handleInputChange, label: t(`checkout.${id}`) });
-
-  if (placedOrder) {
+  if (phase === 'processing') {
     return (
       <div className="px-4 py-10 sm:py-16">
-        <Glass role="status" tone="solid" className="container mx-auto max-w-xl rounded-3xl p-10 text-center">
-          <CircleCheck aria-hidden="true" className="mx-auto mb-4 size-12 text-leaf-600" strokeWidth={1.75} />
-          <h1 className="mb-4 text-3xl font-semibold tracking-tight text-ink">{t('checkout.successTitle')}</h1>
-          <p className="mb-2 text-ink/75">
-            {t('checkout.successFor')} <span className="font-semibold text-ink">{placedOrder.email}</span>
-          </p>
-          <p className="mb-2 text-ink/75 tabular-nums">
-            {t('checkout.successTotal')} <span className="font-semibold text-ink">{formatPrice(placedOrder.total)}</span>
-            {' · '}
-            <span className="font-semibold text-citrus-800">{t('common.calories', { count: placedOrder.totalCalories })}</span>
-          </p>
-          <p className="mb-8 text-sm text-ink/65">{t('checkout.successDemo')}</p>
-          <Link to="/products" className={primaryButton}>
-            {t('common.continueShopping')}
-          </Link>
+        <Glass tone="solid" className="container mx-auto max-w-xl rounded-3xl p-6 sm:p-8">
+          <h1 className="mb-6 text-2xl font-semibold tracking-tight text-ink" role="status">{t('checkout.processing')}</h1>
+          <TraceList trace={trace} />
+        </Glass>
+      </div>
+    );
+  }
+
+  if (phase === 'done') {
+    const { order, requestedNodeId, total } = outcome;
+    return (
+      <div className="px-4 py-10 sm:py-16">
+        <Glass tone="solid" className="container mx-auto max-w-xl rounded-3xl p-6 sm:p-8">
+          <div role="status" className="mb-6 text-center">
+            <CircleCheck aria-hidden="true" className="mx-auto mb-4 size-12 text-leaf-600" strokeWidth={1.75} />
+            <h1 className="mb-2 text-3xl font-semibold tracking-tight text-ink">{t('order.successTitle')}</h1>
+            <p className="font-mono text-lg font-semibold text-ink">{t('order.id', { id: order.id })}</p>
+            <p className="mt-2 text-ink/75 tabular-nums">
+              {t('order.servedBy', { branch: getNode(order.nodeId).name })} · {formatPrice(total)}
+            </p>
+            {order.failover && (
+              <p className="mt-1 text-sm text-amber-800">
+                {t('order.failover', { branch: getNode(requestedNodeId).name, other: getNode(order.nodeId).name })}
+              </p>
+            )}
+            <p className="mt-1 text-sm text-ink/70" data-testid="order-replication">
+              {t('order.replicated', { copies: order.copies, total: NODES.length, quorum: QUORUM })}
+            </p>
+            <p className="mt-1 text-sm text-ink/70">{t(`order.eta.${fulfillment}`)}</p>
+          </div>
+          <h2 className="mb-3 text-lg font-semibold text-ink">{t('order.trace')}</h2>
+          <TraceList trace={order.trace} />
+          <div className="mt-8 text-center">
+            <Link to="/products" className={primaryButton}>{t('common.continueShopping')}</Link>
+          </div>
+        </Glass>
+      </div>
+    );
+  }
+
+  if (phase === 'error') {
+    const { error } = outcome;
+    return (
+      <div className="px-4 py-10 sm:py-16">
+        <Glass tone="solid" className="container mx-auto max-w-xl rounded-3xl p-6 sm:p-8">
+          <div role="alert" className="mb-6 text-center">
+            <CircleX aria-hidden="true" className="mx-auto mb-4 size-12 text-rose-600" strokeWidth={1.75} />
+            <h1 className="mb-2 text-2xl font-semibold tracking-tight text-ink">{t('order.errorTitle')}</h1>
+            <p className="text-ink/80">{t(`order.error.${error.reason ?? 'unknown'}`, { branch: getNode(error.nodeId ?? pricingNodeId).name })}</p>
+          </div>
+          <TraceList trace={trace} />
+          <div className="mt-8 text-center">
+            <button type="button" onClick={() => setPhase('form')} className={primaryButton}>{t('common.retry')}</button>
+          </div>
         </Glass>
       </div>
     );
@@ -80,9 +136,7 @@ const Checkout = () => {
           <h1 className="mb-4 text-3xl font-semibold tracking-tight text-ink">{t('checkout.title')}</h1>
           <PackageOpen aria-hidden="true" className="mx-auto mb-4 size-10 text-ink/50" strokeWidth={1.5} />
           <p className="mb-6 text-lg text-ink/75">{t('cart.empty')}</p>
-          <Link to="/products" className={primaryButton}>
-            {t('common.continueShopping')}
-          </Link>
+          <Link to="/products" className={primaryButton}>{t('common.continueShopping')}</Link>
         </Glass>
       </div>
     );
@@ -91,71 +145,104 @@ const Checkout = () => {
   return (
     <div className="px-4 py-8 sm:py-12">
       <div className="container mx-auto max-w-6xl">
-        <h1 className={`${pageHeading} mb-8 text-center sm:mb-12`}>{t('checkout.title')}</h1>
+        <h1 className={`${pageHeading} mb-6 sm:mb-8`}>{t('checkout.title')}</h1>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <form onSubmit={handleSubmit} className="space-y-8 lg:col-span-2">
-            <Glass as="fieldset" tone="solid" className="rounded-3xl p-6">
-              <legend className={`${sectionHeading} float-left mb-6 w-full`}>{t('checkout.shipping')}</legend>
+          <form onSubmit={handleSubmit} className="space-y-6 lg:col-span-2">
+            <Glass as="fieldset" tone="solid" className="rounded-3xl p-5 sm:p-6">
+              <legend className={`${sectionHeading} float-left mb-4 w-full`}>{t('checkout.fulfillment')}</legend>
+              <div className="clear-both grid gap-3 sm:grid-cols-2">
+                <label className={optionCard}>
+                  <input type="radio" name="fulfillment" value="delivery" checked={fulfillment === 'delivery'} onChange={() => setFulfillment('delivery')} className="mt-1 size-5 accent-citrus-600" />
+                  <span>
+                    <span className="flex items-center gap-2 font-semibold text-ink"><Truck aria-hidden="true" className="size-5" />{t('checkout.delivery')}</span>
+                    <span className="mt-1 block text-sm text-ink/70">{t('checkout.deliveryHint', { branch: getNode(activeNodeId).name })}</span>
+                  </span>
+                </label>
+                <label className={optionCard}>
+                  <input type="radio" name="fulfillment" value="pickup" checked={fulfillment === 'pickup'} onChange={() => setFulfillment('pickup')} className="mt-1 size-5 accent-citrus-600" />
+                  <span>
+                    <span className="flex items-center gap-2 font-semibold text-ink"><Store aria-hidden="true" className="size-5" />{t('checkout.pickup')}</span>
+                    <span className="mt-1 block text-sm text-ink/70">{t('checkout.pickupHint')}</span>
+                  </span>
+                </label>
+              </div>
+
+              {fulfillment === 'pickup' && (
+                <div role="radiogroup" aria-label={t('checkout.pickupBranch')} className="mt-5 space-y-2">
+                  <p className={fieldLabel}>{t('checkout.pickupBranch')}</p>
+                  {NODES.map((node) => {
+                    const missing = missingAt(node.id, orderItems).length;
+                    const status = nodes[node.id].status;
+                    return (
+                      <label key={node.id} className={optionCard}>
+                        <input type="radio" name="pickupNode" value={node.id} checked={pickupNodeId === node.id} onChange={() => setPickupNodeId(node.id)} className="mt-1 size-5 accent-citrus-600" />
+                        <span className="flex flex-1 flex-wrap items-center justify-between gap-2">
+                          <span>
+                            <span className="block font-semibold text-ink">{node.name}</span>
+                            <span className="block text-sm text-ink/65">{localize(node.zone)}</span>
+                          </span>
+                          <span className="flex items-center gap-2 text-sm">
+                            <StatusDot status={status} />
+                            {status === 'offline' ? (
+                              <span className="text-rose-700">{t('branch.status.offline')}</span>
+                            ) : missing === 0 ? (
+                              <span className="text-leaf-700">{t('checkout.hasAll')}</span>
+                            ) : (
+                              <span className="text-amber-800">{t('checkout.missing', { count: missing })}</span>
+                            )}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </Glass>
+
+            <Glass as="fieldset" tone="solid" className="rounded-3xl p-5 sm:p-6">
+              <legend className={`${sectionHeading} float-left mb-4 w-full`}>{t('checkout.contact')}</legend>
               <div className="clear-both grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field {...fieldProps('firstName')} type="text" autoComplete="given-name" />
-                <Field {...fieldProps('lastName')} type="text" autoComplete="family-name" />
-                <Field {...fieldProps('email')} type="email" autoComplete="email" className="sm:col-span-2" />
-                <Field {...fieldProps('address')} type="text" autoComplete="street-address" className="sm:col-span-2" />
-                <Field {...fieldProps('city')} type="text" autoComplete="address-level2" />
-                <Field {...fieldProps('zipCode')} type="text" autoComplete="postal-code" />
+                <Field {...fieldProps('name')} type="text" autoComplete="name" required />
+                <Field
+                  {...fieldProps('phone')}
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  pattern="[0-9]{10}"
+                  title={t('checkout.phoneHint')}
+                  placeholder="3001234567"
+                  required
+                />
+                {fulfillment === 'delivery' && (
+                  <>
+                    <Field {...fieldProps('address')} type="text" autoComplete="street-address" className="sm:col-span-2" required />
+                    <Field {...fieldProps('neighborhood')} type="text" autoComplete="address-level3" required />
+                    <Field {...fieldProps('notes')} type="text" />
+                  </>
+                )}
               </div>
             </Glass>
 
-            <Glass as="fieldset" tone="solid" className="rounded-3xl p-6">
-              <legend className={`${sectionHeading} float-left mb-6 flex w-full items-center gap-2`}>
-                <Lock aria-hidden="true" className="size-5 text-ink/60" />
-                {t('checkout.payment')}
-              </legend>
-              <div className="clear-both grid grid-cols-2 gap-4">
-                <Field
-                  {...fieldProps('cardNumber')}
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="cc-number"
-                  pattern="[0-9 ]{13,23}"
-                  title={t('checkout.cardNumberHint')}
-                  placeholder="1234 5678 9012 3456"
-                  className="col-span-2"
-                />
-                <Field
-                  {...fieldProps('expiryDate')}
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="cc-exp"
-                  pattern="(0[1-9]|1[0-2])/[0-9]{2}"
-                  title={t('checkout.expiryHint')}
-                  placeholder={t('checkout.expiryHint')}
-                />
-                <Field
-                  {...fieldProps('cvv')}
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="cc-csc"
-                  pattern="[0-9]{3,4}"
-                  title={t('checkout.cvvHint')}
-                  placeholder="123"
-                />
+            <Glass as="fieldset" tone="solid" className="rounded-3xl p-5 sm:p-6">
+              <legend className={`${sectionHeading} float-left mb-4 w-full`}>{t('checkout.payment')}</legend>
+              <div className="clear-both grid gap-3 sm:grid-cols-2">
+                {['cash', 'cardTerminal'].map((method) => (
+                  <label key={method} className={`${optionCard} items-center`}>
+                    <input type="radio" name="payment" value={method} checked={payment === method} onChange={() => setPayment(method)} className="size-5 accent-citrus-600" />
+                    <span className="font-semibold text-ink">{t(`checkout.${method}`)}</span>
+                  </label>
+                ))}
               </div>
-
-              <p className="mt-6 flex items-start gap-2 rounded-2xl bg-white/60 px-4 py-3 text-sm text-ink/80 ring-1 ring-white/80 ring-inset">
+              <p className="mt-5 flex items-start gap-2 rounded-2xl bg-white/60 px-4 py-3 text-sm text-ink/80 ring-1 ring-white/80 ring-inset">
                 <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-citrus-700" />
                 {t('checkout.demoNotice')}
               </p>
 
               <p className="mt-6 flex items-baseline justify-between gap-3 text-ink tabular-nums lg:hidden" data-testid="mobile-total">
                 <span className="font-semibold">{t('summary.total')}</span>
-                <span>
-                  <span className="text-lg font-semibold">{formatPrice(total)}</span>
-                  <span className="text-ink/70"> · {t('common.calories', { count: totalCalories })}</span>
-                </span>
+                <span className="text-lg font-semibold">{formatPrice(subtotal + fee)}</span>
               </p>
-
               <button type="submit" className={`${primaryButton} mt-4 w-full lg:mt-6`}>
                 {t('checkout.placeOrder')}
               </button>
@@ -164,51 +251,39 @@ const Checkout = () => {
 
           <aside>
             <Glass tone="solid" className="rounded-3xl p-6 lg:sticky lg:top-28">
-              <h2 className={`${sectionHeading} mb-6`}>{t('summary.title')}</h2>
-
-              <ul className="mb-6 space-y-4">
-                {items.map((item) => (
-                  <li key={item.id} className="flex items-center justify-between gap-4">
+              <h2 className={`${sectionHeading} mb-4`}>{t('summary.title')}</h2>
+              <p className="mb-4 flex items-center gap-2 text-sm text-ink/70">
+                <StatusDot status={nodes[pricingNodeId].status} />
+                {getNode(pricingNodeId).name}
+              </p>
+              <ul className="mb-6 space-y-3">
+                {lines.map((line) => (
+                  <li key={line.id} className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="font-medium text-ink">{localize(item.name)}</p>
-                      <p className="text-sm text-ink/70 tabular-nums">{t('checkout.qty', { count: item.quantity })}</p>
+                      <p className="font-medium text-ink">{localize(line.name)}</p>
+                      <p className="text-sm text-ink/70 tabular-nums">{t('checkout.qty', { count: line.quantity })}</p>
                     </div>
-                    <p className="font-medium tabular-nums">{formatPrice(item.price * item.quantity)}</p>
+                    <p className="font-medium tabular-nums">{formatPrice(line.price * line.quantity)}</p>
                   </li>
                 ))}
               </ul>
-
-              <dl className="mb-6 space-y-3 border-t border-ink/10 pt-4 tabular-nums">
+              <dl className="space-y-3 border-t border-ink/10 pt-4 tabular-nums">
                 <div className="flex justify-between">
                   <dt className="text-ink/75">{t('summary.subtotal')}</dt>
                   <dd className="font-medium">{formatPrice(subtotal)}</dd>
                 </div>
-                <div className="flex justify-between">
-                  <dt className="text-ink/75">{t('summary.shipping')}</dt>
-                  <dd className="font-medium">{formatPrice(0)}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-ink/75">{t('summary.tax', { rate: Math.round(TAX_RATE * 100) })}</dt>
-                  <dd className="font-medium">{formatPrice(tax)}</dd>
-                </div>
+                {fulfillment === 'delivery' && (
+                  <div className="flex justify-between">
+                    <dt className="text-ink/75">{t('summary.delivery')}</dt>
+                    <dd className="font-medium">{fee === 0 ? t('summary.free') : formatPrice(fee)}</dd>
+                  </div>
+                )}
                 <div className="flex justify-between border-t border-ink/10 pt-3">
                   <dt className="text-lg font-semibold">{t('summary.total')}</dt>
-                  <dd className="text-lg font-semibold">{formatPrice(total)}</dd>
+                  <dd className="text-lg font-semibold" data-testid="checkout-total">{formatPrice(subtotal + fee)}</dd>
                 </div>
               </dl>
-
-              <div className="mb-6">
-                <h3 className="mb-2 text-sm font-semibold text-ink/80">{t('summary.totalCalories')}</h3>
-                <div className="flex items-center justify-center gap-2 rounded-2xl bg-citrus-100/80 px-4 py-3 text-lg font-semibold text-citrus-800 tabular-nums ring-1 ring-citrus-300/70 ring-inset">
-                  <Flame aria-hidden="true" className="size-5" />
-                  {t('common.calories', { count: totalCalories })}
-                </div>
-              </div>
-
-              <div className="rounded-2xl bg-white/55 p-4 ring-1 ring-white/80 ring-inset">
-                <h3 className="mb-1 text-sm font-semibold text-ink">{t('checkout.notesTitle')}</h3>
-                <p className="text-sm text-ink/75">{t('checkout.notes', { count: totalCalories })}</p>
-              </div>
+              <p className="mt-4 text-sm text-ink/65">{t('summary.vat')}</p>
             </Glass>
           </aside>
         </div>

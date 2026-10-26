@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DELIVERY_FEE,
   MAX_QUANTITY,
   STORAGE_KEY,
   cartReducer,
+  deliveryFee,
   getCartItems,
   getCartTotals,
   loadCart,
@@ -44,21 +46,18 @@ describe('cartReducer', () => {
   });
 });
 
-describe('getCartTotals', () => {
-  it('computes count, calories and money rounded to cents', () => {
-    // Organic Granola (5.99, 450 kcal) x2 + Protein Bar (2.99, 220 kcal) x1
-    const items = getCartItems([{ id: 1, quantity: 2 }, { id: 2, quantity: 1 }]);
-    expect(getCartTotals(items)).toEqual({
-      itemCount: 3,
-      totalCalories: 1120,
-      subtotal: 14.97,
-      tax: 1.2,
-      total: 16.17
-    });
+describe('prices per branch', () => {
+  it('prices the same cart differently at each branch', () => {
+    const entries = [{ id: 1, quantity: 2 }, { id: 7, quantity: 1 }];
+    // Bananas 3.600 and milk 4.500 base; Chapinero +5 %, Kennedy -4 %, rounded to 100 pesos.
+    expect(getCartTotals(getCartItems(entries, 'chapinero'))).toEqual({ itemCount: 3, subtotal: 2 * 3800 + 4700 });
+    expect(getCartTotals(getCartItems(entries, 'kennedy'))).toEqual({ itemCount: 3, subtotal: 2 * 3500 + 4300 });
   });
 
-  it('returns zeros for an empty cart', () => {
-    expect(getCartTotals([])).toEqual({ itemCount: 0, totalCalories: 0, subtotal: 0, tax: 0, total: 0 });
+  it('charges delivery below the free-delivery threshold only', () => {
+    expect(deliveryFee(20000, 'delivery')).toBe(DELIVERY_FEE);
+    expect(deliveryFee(95000, 'delivery')).toBe(0);
+    expect(deliveryFee(20000, 'pickup')).toBe(0);
   });
 });
 

@@ -13,7 +13,7 @@ Constraints: page structure stays as today (user chose "skin only"); styling 100
 
 ## Direction contract
 
-THESIS: nutriFlow as liquid glass laid over a fresh-produce market: every surface is clear glass that bends the colour behind it, and calories glow citrus beside price. Refuses the category default of flat white cards on a pastel ground.
+THESIS: nutriFlow as liquid glass laid over a fresh-produce market: every surface is clear glass that bends the colour behind it, and the branch network (nodes, latency, failover) is always visible beside price. Refuses the category default of flat white cards on a pastel ground.
 
 OWN-WORLD: Ground is a full-bleed produce scene (citrus, leaf, berry) washed with soft light. Glass: white 35–65% fill, heavy backdrop blur with boosted saturation, bright top specular rim, darker lower edge, soft offset shadow. Ink is green-black; citrus orange marks calories, focus and active state; primary actions are dark ink glass with white text. System UI type (SF on Apple), tight heading tracking, tabular numerals for money and kcal. Lucide icons, one stroke weight.
 

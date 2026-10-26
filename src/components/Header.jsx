@@ -1,8 +1,9 @@
 import { Link, NavLink } from 'react-router';
-import { House, Leaf, ShoppingBag, Store } from 'lucide-react';
+import { House, Leaf, ListChecks, ShoppingBag, Store } from 'lucide-react';
 import { useCart } from '../cart/useCart';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
+import ClusterBadge from './ClusterBadge';
 import LanguageToggle from './LanguageToggle';
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-citrus-500';
@@ -29,7 +30,7 @@ const Header = () => {
 
   return (
     <header className="sticky top-[max(0.75rem,env(safe-area-inset-top))] z-50 px-3 sm:px-4">
-      <div className="relative container mx-auto flex items-center justify-between gap-3 py-2 pr-2 pl-3 sm:pr-3 sm:pl-5">
+      <div className="relative container mx-auto flex items-center justify-between gap-2 py-2 pr-2 pl-3 sm:pr-3 sm:pl-5">
         <Glass aria-hidden="true" className="absolute inset-0 -z-10 rounded-full" />
         <Link to="/" className={`flex min-h-11 items-center gap-2 rounded-full text-lg font-semibold tracking-tight text-ink ${focusRing}`}>
           <span className="flex size-8 items-center justify-center rounded-full bg-citrus-500 text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.45)]">
@@ -37,7 +38,7 @@ const Header = () => {
           </span>
           nutriFlow
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <nav aria-label={t('nav.label')} className={navClass}>
             <NavLink to="/" end className={tabClass}>
               <House aria-hidden="true" className="size-5 md:hidden" strokeWidth={1.9} />
@@ -46,6 +47,10 @@ const Header = () => {
             <NavLink to="/products" className={tabClass}>
               <Store aria-hidden="true" className="size-5 md:hidden" strokeWidth={1.9} />
               {t('nav.products')}
+            </NavLink>
+            <NavLink to="/list" className={tabClass}>
+              <ListChecks aria-hidden="true" className="size-5 md:hidden" strokeWidth={1.9} />
+              {t('nav.list')}
             </NavLink>
             <NavLink to="/cart" className={tabClass} aria-label={t('nav.cartLabel', { count: itemCount })}>
               <ShoppingBag aria-hidden="true" className="size-5 md:size-4" strokeWidth={1.9} />
@@ -62,6 +67,7 @@ const Header = () => {
               )}
             </NavLink>
           </nav>
+          <ClusterBadge />
           <LanguageToggle />
         </div>
       </div>

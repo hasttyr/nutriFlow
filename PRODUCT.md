@@ -8,38 +8,40 @@ web
 
 ## Users
 
-Academic evaluators (Práctica IV, SD course) reviewing a working demo store, plus anyone the student shows it to. They browse products, compare calories, build a cart, and walk through checkout to judge that the whole flow works.
+Academic evaluators of the Práctica IV project in the SD (Sistemas Distribuidos) course, plus anyone the student shows it to. They plan a grocery run, compare branches, build a cart, and check out, while judging whether the app behaves like a distributed system.
 
 ## Product Purpose
 
-nutriFlow is a demo grocery marketplace that shows calorie information alongside price at every step: product list, product detail (calories scale with quantity), cart, and checkout totals. Success means the evaluator can complete the full flow without errors and clearly see the calorie tracking.
+nutriFlow helps people do their groceries ("hacer mercado") in Bogotá: build a shopping list, compare price and stock across branches, and get delivery or pick up at a branch. Success means the evaluator completes the flow and clearly sees distributed-systems behaviour: branch nodes, replicas, latency, failover, quorum replication and saga compensation.
 
 ## Positioning
 
-Calories are a first-class number next to price everywhere, including per-quantity and whole-order totals.
+Every branch is a visible node with its own inventory replica; the shopper sees which node answered, and the order's path across the cluster.
 
 ## Capabilities and Constraints
 
-- Routes: `/`, `/products`, `/product/:id`, `/cart`, `/checkout`, 404.
-- Shared cart persisted in `localStorage`; prices always come from the catalog.
-- Checkout is a demo: no payment is processed and card data is never stored. This must stay visible to users.
-- Interface is bilingual (Spanish and English) with a user-facing language toggle.
-- Stack: React 19, React Router 8, Vite 8, Tailwind CSS 4 (styling is Tailwind only), Vitest.
-- Fully responsive and mobile-first: phones are a primary target (touch targets of at least 44px, safe areas, thumb-reachable navigation).
-- Page content and flows stay as they are; visual changes are skin-level unless the user asks otherwise.
+- Routes: `/`, `/products`, `/product/:id`, `/list`, `/cart`, `/checkout`, `/status`, 404.
+- The distributed backend is simulated in the browser (`src/distributed/`), never a real server. It must look and behave distributed; it must also say plainly that it is a simulation.
+- Three branch nodes (Chapinero, Usaquén, Kennedy) with per-branch prices and stock; nodes can be set to normal, slow or down from `/status`.
+- Prices in Colombian pesos (COP), VAT included; delivery fee COP 5.900, free from COP 90.000.
+- Payment is on delivery and only registered; nothing is charged and nothing is delivered. This must stay visible to users.
+- Bilingual (Spanish and English) with a user-facing toggle.
+- Fully responsive and mobile-first: touch targets of at least 44px, safe areas, thumb-reachable navigation.
+- Stack: React 19, React Router 8, Vite 8, Tailwind CSS 4 (styling is Tailwind only), Vitest. Deployed on Vercel from `main`.
 
 ## Brand Commitments
 
 - Name: nutriFlow.
 - Visual material pinned by the user: "liquid glass" (Apple-style translucent glass), built entirely with Tailwind CSS.
+- Products are shown with line icons on category-tinted tiles, not photos.
 
 ## Evidence on Hand
 
-- Six catalog products with price and calories in `src/data/products.js`.
-- Product photography: free-license stock photos stored locally with recorded origin. No real customers, reviews, or sales figures exist; do not invent them.
+- Eighteen catalog products with base prices in `src/data/products.js`; the backdrop photo is CC0 (see README).
+- No real customers, reviews, sales figures or delivery times exist; delivery estimates are labelled as demo estimates.
 
 ## Product Principles
 
-1. Calories and price are always shown together and always agree with the cart totals.
-2. The demo must be honest: no fake claims, no implied real payments.
-3. Every flow works in both languages.
+1. The distributed behaviour is shown, not claimed: every claim on screen comes from the simulation's real state.
+2. The demo is honest: it says it is a simulation and never implies real payments or deliveries.
+3. Every flow works in both languages and on a phone.

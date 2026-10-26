@@ -1,34 +1,36 @@
 # nutriFlow
 
-nutriFlow is a React marketplace with built-in calorie tracking, bilingual (ES/EN) and mobile-first.
+nutriFlow helps you do your groceries ("hacer mercado") in Bogotá: build a shopping list, compare branches, and get delivery or pick up at a store. It is the Práctica IV project for the Distributed Systems (SD) course, so the app **looks and behaves like a distributed system**. The backend is simulated in the browser; it is not a real server.
 
 ## Features
 
-- Browse products with detailed information
-- View and track calories for each product
-- Add items to a shared cart (persisted in `localStorage`, live badge in the header)
-- Proceed through checkout with validated shipping and payment fields
-- Responsive design for all devices
+- **Catalog** with search (accent-insensitive, in Spanish or English) and categories.
+- **Shopping list**: plan, check off what you already have, and move what is missing to the cart.
+- **Compare branches**: every branch answers with its own price and stock, each at its own latency.
+- **Delivery or pickup**, paid on delivery (demo: nothing is charged).
+- **System status** (`/status`): node health, latency, inventory version, requests, failures, a live call log, and controls to make any node slow or bring it down.
+- Bilingual (ES/EN), prices in Colombian pesos, liquid-glass UI built 100% with Tailwind, mobile-first.
 
-## Technologies Used
+## Simulated distributed system
 
-- React 19
-- React Router 8 (declarative mode)
-- Vite 8
-- Tailwind CSS 4
-- Vitest 5 + Testing Library
-- ESLint 10 (flat config, `react-hooks` and `react-refresh` rules)
+Everything lives in `src/distributed/`:
+
+| Concept | Where it shows |
+| --- | --- |
+| **Nodes**: three branches (Chapinero, Usaquén, Kennedy), each with its own inventory replica | Branch picker, `/status` |
+| **Network**: every call has latency and can fail (4 % transient failure rate) | "served by" badge, call log |
+| **Retries with exponential backoff** and a **circuit breaker** for nodes known to be down | Call log |
+| **Heartbeats** refresh each node's latency every 2 s | `/status`, branch picker |
+| **Failover reads**: if a branch does not answer, a replica serves its data | Products page ("served by the … replica") |
+| **Order saga**: route → reserve stock → register payment → create order → replicate → notify | Live order trace at checkout |
+| **Quorum replication** (2 of 3) and **compensation** (stock is released if quorum fails) | Order confirmation / error |
+| **Delivery failover**: a down branch hands the order to the next one | Order confirmation |
+
+Try it: open `/status`, set Chapinero to **Down**, then browse products and place a delivery order.
 
 ## Requirements
 
-- Node.js `^22.22.2 || >=24.15.0`
-
-## Setup Instructions
-
-1. Clone the repository
-2. Navigate to the project directory: `cd market-app`
-3. Install dependencies: `npm install`
-4. Start the development server: `npm run dev` (or `npm start`)
+- Node.js 24 (React Router 8 needs Node ≥ 22.22)
 
 ## Scripts
 
@@ -39,55 +41,21 @@ nutriFlow is a React marketplace with built-in calorie tracking, bilingual (ES/E
 | `npm run preview` | Serve the production build locally |
 | `npm run lint` | Run ESLint |
 | `npm test` | Run the test suite once |
-| `npm run test:watch` | Run tests in watch mode |
-| `npm run check` | Lint + tests + build (use before delivering) |
+| `npm run check` | Lint + tests + build (use before pushing) |
 
-## Application Structure
+## Deployment
 
-- `src/main.jsx` - Entry point (router + cart provider)
-- `src/App.jsx` - Layout and routes
-- `src/components/Header.jsx` - Navigation header with live cart count
-- `src/data/products.js` - Product catalog (single source of truth)
-- `src/cart/` - Cart state: reducer, totals, persistence (`cart.js`), provider and `useCart` hook
-- `src/pages/HomePage.jsx` - Homepage component
-- `src/pages/ProductList.jsx` - Product listing page
-- `src/pages/ProductDetail.jsx` - Individual product details with calorie tracking
-- `src/pages/Cart.jsx` - Shopping cart
-- `src/pages/Checkout.jsx` - Checkout page with form
-- `src/pages/NotFound.jsx` - 404 page
-- `public/images/` - Product images
+Pushing to `main` deploys on Vercel. `vercel.json` rewrites every route to `index.html` so deep links such as `/products` work on reload.
 
-## Navigation
+## Application structure
 
-The app includes routes for:
-- `/` - Home Page
-- `/products` - Product Listing
-- `/product/:id` - Individual Product Details (with calorific information)
-- `/cart` - Shopping Cart
-- `/checkout` - Checkout Process
-- `*` - Not Found
-
-## Calorie Tracking
-
-The product detail page allows users to:
-- Select quantity of items
-- See real-time calorie calculation for selected quantity
-- View calorie information per serving and total calories
-
-The cart and checkout show the total calories of the whole order.
-
-> Checkout is a demo: no payment is processed and card data is never stored.
+- `src/distributed/` - simulated cluster (`cluster.js`), branch inventories (`inventory.js`), order saga (`orders.js`), React hooks (`hooks.js`)
+- `src/data/products.js` - catalog with base prices and icons
+- `src/cart/`, `src/list/` - cart and shopping list state (persisted in `localStorage`)
+- `src/i18n/` - Spanish/English messages and formatting
+- `src/ui/` - liquid-glass primitives and shared Tailwind class sets
+- `src/components/`, `src/pages/` - layout and routes
 
 ## Image credits
 
-All photos are CC0 / public domain (no attribution required), found via [Openverse](https://openverse.org) and stored in `public/images/`:
-
-| File | Source |
-| --- | --- |
-| `granola.jpg` | StockSnap "Muesli Granola" (IG3CNZ7B8L) |
-| `protein-bar.webp` | rawpixel "Free yogurt energy bar image" |
-| `juice.webp` | rawpixel "Free lemon juice glass image" |
-| `bread.jpg` | Wikimedia Commons "Cut rye bread Kartoffelkruste 2025-02-20 02" |
-| `yogurt.webp` | rawpixel "Free healthy yogurt bowl image" |
-| `almond-butter.webp` | rawpixel peanut butter jar (stand-in for almond butter) |
-| `backdrop-produce.jpg` | StockSnap "Fruit Vegetables" (F8B73CPSBK) |
+`public/images/backdrop-produce.jpg` is StockSnap "Fruit Vegetables" (F8B73CPSBK), CC0 / public domain, found via [Openverse](https://openverse.org).

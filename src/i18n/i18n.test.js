@@ -15,20 +15,20 @@ describe('messages', () => {
 describe('createTranslator', () => {
   it('interpolates and pluralises', () => {
     const { t } = createTranslator('en');
-    expect(t('common.calories', { count: 1 })).toBe('1 calorie');
-    expect(t('common.calories', { count: 1120 })).toBe('1,120 calories');
+    expect(t('products.count', { count: 1 })).toBe('1 product');
+    expect(t('products.count', { count: 1200 })).toBe('1,200 products');
     expect(t('nav.cartLabel', { count: 3 })).toBe('Cart, 3 items');
   });
 
   it('translates to Spanish', () => {
     const { t } = createTranslator('es');
-    expect(t('detail.totalFor', { count: 1 })).toBe('Total para 1 porción:');
-    expect(t('detail.totalFor', { count: 4 })).toBe('Total para 4 porciones:');
+    expect(t('list.moveToCart', { count: 1 })).toBe('Pasar 1 faltante al carrito');
+    expect(t('list.moveToCart', { count: 4 })).toBe('Pasar 4 faltantes al carrito');
   });
 
-  it('formats US dollars unambiguously in both languages', () => {
-    expect(createTranslator('en').formatPrice(5.99)).toBe('$5.99');
-    expect(createTranslator('es').formatPrice(5.99)).toMatch(/^USD\s5\.99$/);
+  it('formats Colombian pesos without decimals', () => {
+    expect(createTranslator('es').formatPrice(12900)).toMatch(/^\$\s12\.900$/);
+    expect(createTranslator('en').formatPrice(12900)).toMatch(/^COP\s12,900$/);
   });
 
   it('fails loudly on a missing key', () => {
@@ -36,9 +36,9 @@ describe('createTranslator', () => {
   });
 
   it('localizes bilingual records', () => {
-    const name = { en: 'Protein Bar', es: 'Barra de proteína' };
-    expect(createTranslator('es').localize(name)).toBe('Barra de proteína');
-    expect(createTranslator('en').localize(name)).toBe('Protein Bar');
+    const name = { en: 'Bananas', es: 'Banano' };
+    expect(createTranslator('es').localize(name)).toBe('Banano');
+    expect(createTranslator('en').localize(name)).toBe('Bananas');
   });
 });
 
@@ -46,7 +46,7 @@ describe('locale detection', () => {
   afterEach(() => vi.restoreAllMocks());
 
   it('follows the browser language when nothing is saved', () => {
-    vi.spyOn(window.navigator, 'languages', 'get').mockReturnValue(['es-MX', 'en']);
+    vi.spyOn(window.navigator, 'languages', 'get').mockReturnValue(['es-CO', 'en']);
     expect(detectLocale()).toBe('es');
     expect(loadLocale()).toBe('es');
   });
