@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+/* Design tokens only: every style in the app is a Tailwind utility built from these. */
+@theme {
+  --color-ink: #13201a;
+
+  --color-citrus-50: #fff5ec;
+  --color-citrus-100: #ffe6cf;
+  --color-citrus-200: #ffcb9d;
+  --color-citrus-300: #ffaa66;
+  --color-citrus-400: #ff8a33;
+  --color-citrus-500: #f46f12;
+  --color-citrus-600: #d85a06;
+  --color-citrus-700: #b04607;
+  --color-citrus-800: #8c380c;
+
+  --color-leaf-100: #ddf3e3;
+  --color-leaf-300: #8fd6a4;
+  --color-leaf-400: #5dbf7c;
+  --color-leaf-600: #2e7d4f;
+  --color-leaf-700: #23623e;
+
+  --color-lemon-300: #ffdb5c;
+  --color-berry-400: #e2557f;
+
+  --color-ground: #f2efe6;
+
+  /* Liquid glass depth: bright specular top rim, lit lower rim (light passing through the pane),
+     inner glow for thickness, a hairline edge, and a soft offset drop. */
+  --shadow-glass: inset 0 1px 0 0 rgb(255 255 255 / 0.9), inset 0 -1px 0 0 rgb(255 255 255 / 0.4),
+    inset 0 0 24px 0 rgb(255 255 255 / 0.35), 0 0 0 1px rgb(19 32 26 / 0.06), 0 14px 34px -14px rgb(19 32 26 / 0.35);
+  --shadow-glass-raised: inset 0 1px 0 0 rgb(255 255 255 / 0.95), inset 0 -1px 0 0 rgb(255 255 255 / 0.45),
+    inset 0 0 28px 0 rgb(255 255 255 / 0.4), 0 0 0 1px rgb(19 32 26 / 0.06), 0 24px 50px -18px rgb(19 32 26 / 0.45);
+  /* Same material at control scale: buttons, chips, segmented toggles. */
+  --shadow-glass-sm: inset 0 1px 0 0 rgb(255 255 255 / 0.9), inset 0 -1px 0 0 rgb(255 255 255 / 0.35),
+    0 0 0 1px rgb(19 32 26 / 0.05), 0 6px 14px -6px rgb(19 32 26 / 0.3);
+  --shadow-ink: inset 0 1px 0 0 rgb(255 255 255 / 0.22), 0 12px 26px -12px rgb(19 32 26 / 0.65);
+}
