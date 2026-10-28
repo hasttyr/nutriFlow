@@ -29,6 +29,12 @@ const renderApp = (path = '/') => {
 
 const seedCart = (entries) => window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
 
+// Opens a glass select by its accessible name and clicks one of its options.
+const pick = async (user, name, option) => {
+  await user.click(screen.getByRole('combobox', { name }));
+  await user.click(screen.getByRole('option', { name: option }));
+};
+
 const fillDelivery = async (user) => {
   await user.type(screen.getByLabelText('Full name'), 'Ada Lovelace');
   await user.type(screen.getByLabelText('Mobile'), '3001234567');
@@ -92,7 +98,7 @@ describe('Browsing', () => {
     expect(screen.getAllByText('COP 3,800').length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole('button', { name: 'Buy at Kennedy' }));
-    expect(screen.getByLabelText('Branch')).toHaveValue('kennedy');
+    expect(screen.getByRole('combobox', { name: 'Branch' })).toHaveTextContent(/^Kennedy · Online/);
     expect(screen.getAllByText('COP 3,500').length).toBeGreaterThan(0);
   });
 
@@ -215,7 +221,7 @@ describe('System status', () => {
 describe('Language picker', () => {
   it('detects the language without saving it', () => {
     renderApp('/');
-    expect(screen.getByRole('combobox', { name: 'Language' })).toHaveValue('en');
+    expect(screen.getByRole('combobox', { name: 'Language' })).toHaveTextContent('English');
     expect(document.documentElement).toHaveAttribute('lang', 'en');
     expect(window.localStorage.getItem(LOCALE_KEY)).toBeNull();
   });
@@ -224,7 +230,7 @@ describe('Language picker', () => {
     seedCart([{ id: 1, quantity: 2 }]);
     const { user } = renderApp('/cart');
 
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Language' }), 'Español');
+    await pick(user, 'Language', 'Español');
     expect(screen.getByRole('heading', { level: 1, name: 'Tu carrito' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Carrito, 2 artículos' })).toBeInTheDocument();
     expect(screen.getByTestId('cart-total')).toHaveTextContent(/^\$\s7\.600$/);
@@ -236,16 +242,63 @@ describe('Language picker', () => {
     seedCart([{ id: 1, quantity: 2 }]);
     const { user } = renderApp('/cart');
 
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Language' }), 'Polski');
+    await pick(user, 'Language', 'Polski');
     expect(screen.getByRole('heading', { level: 1, name: 'Twój koszyk' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Koszyk, 2 produkty' })).toBeInTheDocument();
     expect(screen.getByText('Banany')).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Język' }), 'Português');
+    await pick(user, 'Język', 'Português');
     expect(screen.getByRole('heading', { level: 1, name: 'Seu carrinho' })).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Idioma' }), 'Italiano');
+    await pick(user, 'Idioma', 'Italiano');
     expect(screen.getByRole('heading', { level: 1, name: 'Il tuo carrello' })).toBeInTheDocument();
     expect(document.documentElement).toHaveAttribute('lang', 'it');
+  });
+
+  it('works from the keyboard', async () => {
+    const { user } = renderApp('/');
+    const picker = screen.getByRole('combobox', { name: 'Language' });
+    picker.focus();
+
+    await user.keyboard('{ArrowDown}');
+    expect(picker).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('option', { name: 'English' })).toHaveAttribute('aria-selected', 'true');
+
+    await user.keyboard('{ArrowDown}{ArrowDown}');
+    expect(picker).toHaveAttribute('aria-activedescendant', screen.getByRole('option', { name: 'Polski' }).id);
+    await user.keyboard('{Enter}');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('lang', 'pl');
+    expect(picker).toHaveFocus();
+
+    // Typing jumps to a language; Escape closes without changing it.
+    await user.keyboard('i');
+    expect(picker).toHaveAttribute('aria-activedescendant', screen.getByRole('option', { name: 'Italiano' }).id);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('lang', 'pl');
+  });
+
+  it('closes when clicking elsewhere', async () => {
+    const { user } = renderApp('/');
+    await user.click(screen.getByRole('combobox', { name: 'Language' }));
+    expect(screen.getByRole('listbox', { name: 'Language' })).toBeInTheDocument();
+    await user.click(screen.getByRole('heading', { level: 1 }));
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+});
+
+describe('Branch picker', () => {
+  it('lists every branch with its health and switches the active one', async () => {
+    const { user } = renderApp('/products');
+    await screen.findByText('18 products');
+    setNodeStatus('kennedy', 'slow');
+
+    await user.click(screen.getByRole('combobox', { name: 'Branch' }));
+    expect(screen.getAllByRole('option')).toHaveLength(3);
+    expect(screen.getByRole('option', { name: /^Kennedy,\s?Slow · \d+ ms$/ })).toBeInTheDocument();
+    await user.click(screen.getByRole('option', { name: /^Usaquén/ }));
+    expect(screen.getByRole('combobox', { name: 'Branch' })).toHaveTextContent(/^Usaquén · Online/);
+    expect(await screen.findByTestId('data-source')).toHaveTextContent(/Usaquén inventory/);
   });
 });

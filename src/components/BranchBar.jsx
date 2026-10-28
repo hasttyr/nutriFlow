@@ -3,6 +3,7 @@ import { NODES, getNode, setActiveNode } from '../distributed/cluster';
 import { useCluster } from '../distributed/hooks';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
+import GlassSelect from '../ui/GlassSelect';
 import StatusDot from '../ui/StatusDot';
 
 // Branch picker plus, when a request just ran, which node actually answered it.
@@ -10,32 +11,42 @@ const BranchBar = ({ source }) => {
   const { t } = useLocale();
   const { activeNodeId, nodes } = useCluster();
   const active = nodes[activeNodeId];
+  const activeNode = getNode(activeNodeId);
+
+  const options = NODES.map((node) => ({
+    value: node.id,
+    label: node.name,
+    content: (
+      <span className="flex items-center gap-2.5">
+        <StatusDot status={nodes[node.id].status} />
+        <span>
+          {node.name}
+          {/* Screen readers would otherwise run the name into the status ("KennedySlow"). */}
+          <span className="sr-only">, </span>
+        </span>
+        <span className="ml-auto pl-4 font-normal text-ink/65 tabular-nums">
+          {t(`branch.status.${nodes[node.id].status}`)} · {nodes[node.id].latency} ms
+        </span>
+      </span>
+    )
+  }));
 
   return (
     <Glass className="mb-6 flex flex-col gap-2 rounded-3xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:rounded-full sm:py-2">
       <div className="flex min-w-0 items-center gap-3">
         <MapPin aria-hidden="true" className="size-5 shrink-0 text-citrus-700" />
-        <label htmlFor="branch-picker" className="shrink-0 text-sm font-medium text-ink/80">{t('branch.label')}</label>
-        {/* A native select is as wide as its longest option; let it shrink and clip on phones. */}
-        <div className="relative min-w-0 flex-1 sm:flex-none">
-          <select
-            id="branch-picker"
-            value={activeNodeId}
-            onChange={(event) => setActiveNode(event.target.value)}
-            className="min-h-11 w-full min-w-0 cursor-pointer appearance-none truncate rounded-full border border-white/80 bg-white/70 py-2 pr-10 pl-4 font-semibold text-ink shadow-glass-sm transition hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-citrus-500"
-          >
-            {NODES.map((node) => (
-              <option key={node.id} value={node.id}>
-                {t('branch.option', {
-                  name: node.name,
-                  status: t(`branch.status.${nodes[node.id].status}`),
-                  ms: nodes[node.id].latency
-                })}
-              </option>
-            ))}
-          </select>
-          <ChevronDown aria-hidden="true" className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-ink/70" />
-        </div>
+        <span id="branch-label" className="shrink-0 text-sm font-medium text-ink/80">{t('branch.label')}</span>
+        {/* The trigger can shrink and clip on phones; the list always shows each branch in full. */}
+        <GlassSelect
+          value={activeNodeId}
+          options={options}
+          onChange={setActiveNode}
+          labelledBy="branch-label"
+          className="relative flex min-h-11 min-w-0 flex-1 items-center rounded-full border border-white/80 bg-white/70 py-2 pr-10 pl-4 font-semibold text-ink shadow-glass-sm transition hover:bg-white/90 aria-expanded:bg-white/90 sm:flex-none"
+        >
+          <span className="truncate">{t('branch.option', { name: activeNode.name, status: t(`branch.status.${active.status}`), ms: active.latency })}</span>
+          <ChevronDown aria-hidden="true" className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-ink/70 transition-transform duration-200 in-aria-expanded:rotate-180" />
+        </GlassSelect>
         <StatusDot status={active.status} />
       </div>
       {source && (

@@ -1,6 +1,6 @@
 // Shared Tailwind class sets for controls, so every page speaks the same glass vocabulary.
 
-const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-citrus-500';
+export const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-citrus-500';
 
 const pressable = `cursor-pointer transition duration-200 ease-out active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 ${focusRing}`;
 
