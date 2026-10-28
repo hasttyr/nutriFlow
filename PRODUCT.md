@@ -25,7 +25,7 @@ Every branch is a visible node with its own inventory replica; the shopper sees 
 - Three branch nodes (Chapinero, Usaquén, Kennedy) with per-branch prices and stock; nodes can be set to normal, slow or down from `/status`.
 - Prices in Colombian pesos (COP), VAT included; delivery fee COP 5.900, free from COP 90.000.
 - Payment is on delivery and only registered; nothing is charged and nothing is delivered. This must stay visible to users.
-- Bilingual (Spanish and English) with a user-facing toggle.
+- Five languages (Spanish, English, Portuguese, Polish, Italian), detected from browser language and location, with a user-facing picker.
 - Fully responsive and mobile-first: touch targets of at least 44px, safe areas, thumb-reachable navigation.
 - Stack: React 19, React Router 8, Vite 8, Tailwind CSS 4 (styling is Tailwind only), Vitest. Deployed on Vercel from `main`.
 
@@ -44,4 +44,4 @@ Every branch is a visible node with its own inventory replica; the shopper sees 
 
 1. The distributed behaviour is shown, not claimed: every claim on screen comes from the simulation's real state.
 2. The demo is honest: it says it is a simulation and never implies real payments or deliveries.
-3. Every flow works in both languages and on a phone.
+3. Every flow works in every language and on a phone.

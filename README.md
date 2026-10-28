@@ -4,12 +4,12 @@ nutriFlow helps you do your groceries ("hacer mercado") in Bogotá: build a shop
 
 ## Features
 
-- **Catalog** with search (accent-insensitive, in Spanish or English) and categories.
+- **Catalog** with search (accent-insensitive, in any of the five languages) and categories.
 - **Shopping list**: plan, check off what you already have, and move what is missing to the cart.
 - **Compare branches**: every branch answers with its own price and stock, each at its own latency.
 - **Delivery or pickup**, paid on delivery (demo: nothing is charged).
 - **System status** (`/status`): node health, latency, inventory version, requests, failures, a live call log, and controls to make any node slow or bring it down.
-- Bilingual (ES/EN), prices in Colombian pesos, liquid-glass UI built 100% with Tailwind, mobile-first.
+- **Five languages** (Spanish, English, Portuguese, Polish, Italian), picked automatically from the browser language or, for English browsers, from the visitor's time zone (e.g. Warsaw → Polish); a manual choice is remembered. Prices in Colombian pesos, liquid-glass UI built 100% with Tailwind, mobile-first.
 
 ## Simulated distributed system
 
@@ -52,7 +52,7 @@ Pushing to `main` deploys on Vercel. `vercel.json` rewrites every route to `inde
 - `src/distributed/` - simulated cluster (`cluster.js`), branch inventories (`inventory.js`), order saga (`orders.js`), React hooks (`hooks.js`)
 - `src/data/products.js` - catalog with base prices and icons
 - `src/cart/`, `src/list/` - cart and shopping list state (persisted in `localStorage`)
-- `src/i18n/` - Spanish/English messages and formatting
+- `src/i18n/` - language detection, formatting, and one message file per language in `locales/`
 - `src/ui/` - liquid-glass primitives and shared Tailwind class sets
 - `src/components/`, `src/pages/` - layout and routes
 

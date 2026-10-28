@@ -212,16 +212,40 @@ describe('System status', () => {
   });
 });
 
-describe('Language toggle', () => {
+describe('Language picker', () => {
+  it('detects the language without saving it', () => {
+    renderApp('/');
+    expect(screen.getByRole('combobox', { name: 'Language' })).toHaveValue('en');
+    expect(document.documentElement).toHaveAttribute('lang', 'en');
+    expect(window.localStorage.getItem(LOCALE_KEY)).toBeNull();
+  });
+
   it('switches to Spanish with Colombian pesos and remembers the choice', async () => {
     seedCart([{ id: 1, quantity: 2 }]);
     const { user } = renderApp('/cart');
 
-    await user.click(screen.getByRole('button', { name: 'Español' }));
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Language' }), 'Español');
     expect(screen.getByRole('heading', { level: 1, name: 'Tu carrito' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Carrito, 2 artículos' })).toBeInTheDocument();
     expect(screen.getByTestId('cart-total')).toHaveTextContent(/^\$\s7\.600$/);
     expect(document.documentElement).toHaveAttribute('lang', 'es');
     expect(window.localStorage.getItem(LOCALE_KEY)).toBe('es');
+  });
+
+  it('offers Portuguese, Polish and Italian', async () => {
+    seedCart([{ id: 1, quantity: 2 }]);
+    const { user } = renderApp('/cart');
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Language' }), 'Polski');
+    expect(screen.getByRole('heading', { level: 1, name: 'Twój koszyk' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Koszyk, 2 produkty' })).toBeInTheDocument();
+    expect(screen.getByText('Banany')).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Język' }), 'Português');
+    expect(screen.getByRole('heading', { level: 1, name: 'Seu carrinho' })).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Idioma' }), 'Italiano');
+    expect(screen.getByRole('heading', { level: 1, name: 'Il tuo carrello' })).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('lang', 'it');
   });
 });

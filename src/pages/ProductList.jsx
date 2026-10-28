@@ -13,8 +13,9 @@ import ProductIcon from '../ui/ProductIcon';
 import StockBadge from '../ui/StockBadge';
 import { fieldInput, iconButton, pageHeading, primaryButton } from '../ui/classes';
 
-// Case- and accent-insensitive matching ("cafe" finds "Café").
-const fold = (text) => text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+// Case- and accent-insensitive matching ("cafe" finds "Café"). Polish ł is a letter of its own,
+// not l plus a diacritic, so it is folded by hand ("jablka" finds "jabłka").
+const fold = (text) => text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replaceAll('ł', 'l');
 
 const chipClass = (active) =>
   `min-h-11 shrink-0 cursor-pointer rounded-full px-4 text-sm font-semibold whitespace-nowrap transition duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-citrus-500 ${
@@ -33,7 +34,7 @@ const ProductList = () => {
 
   const offers = (catalog.value?.value ?? []).filter(({ product }) => {
     const inCategory = category === 'all' || product.category === category;
-    const matches = !query.trim() || fold(`${product.name.es} ${product.name.en}`).includes(fold(query.trim()));
+    const matches = !query.trim() || fold(Object.values(product.name).join(' ')).includes(fold(query.trim()));
     return inCategory && matches;
   });
 

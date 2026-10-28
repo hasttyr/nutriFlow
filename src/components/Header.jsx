@@ -4,7 +4,7 @@ import { useCart } from '../cart/useCart';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
 import ClusterBadge from './ClusterBadge';
-import LanguageToggle from './LanguageToggle';
+import LanguagePicker from './LanguagePicker';
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-citrus-500';
 
@@ -68,7 +68,7 @@ const Header = () => {
             </NavLink>
           </nav>
           <ClusterBadge />
-          <LanguageToggle />
+          <LanguagePicker />
         </div>
       </div>
     </header>
