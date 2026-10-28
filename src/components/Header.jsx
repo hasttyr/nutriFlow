@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router';
-import { House, Leaf, ListChecks, ShoppingBag, Store } from 'lucide-react';
+import { CircleUserRound, House, Leaf, ListChecks, ShoppingBag, Store } from 'lucide-react';
 import { useCart } from '../cart/useCart';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
@@ -69,6 +69,17 @@ const Header = () => {
           </nav>
           <ClusterBadge />
           <LanguagePicker />
+          <NavLink
+            to="/profile"
+            aria-label={t('nav.account')}
+            className={({ isActive }) =>
+              `flex size-11 items-center justify-center rounded-full ring-1 ring-white/50 ring-inset transition duration-200 ease-out md:size-8 ${focusRing} ${
+                isActive ? 'bg-white/85 text-ink shadow-glass-sm' : 'bg-ink/8 text-ink/75 hover:bg-white/55 hover:text-ink'
+              }`
+            }
+          >
+            <CircleUserRound aria-hidden="true" className="size-5 md:size-4.5" strokeWidth={1.9} />
+          </NavLink>
         </div>
       </div>
     </header>

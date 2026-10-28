@@ -5,6 +5,7 @@ const pl = {
   'nav.products': 'Produkty',
   'nav.list': 'Lista',
   'nav.cart': 'Koszyk',
+  'nav.account': 'Moje konto',
   'nav.cartLabel': {
     one: 'Koszyk, {count} produkt',
     few: 'Koszyk, {count} produkty',
@@ -33,6 +34,7 @@ const pl = {
   'common.continueShopping': 'Kontynuuj zakupy',
   'common.backToProducts': 'Wróć do produktów',
   'common.retry': 'Spróbuj ponownie',
+  'common.goHome': 'Wróć na start',
 
   'stock.available': 'Dostępny',
   'stock.low': {
@@ -209,9 +211,71 @@ const pl = {
   'status.ok': 'ok',
   'status.failed': 'błąd',
 
+  'auth.perksTitle': 'Z twoim kontem',
+  'auth.perk1': 'Lista i koszyk na wszystkich twoich urządzeniach',
+  'auth.perk2': 'Historia zamówień i ponowne zamówienie jednym dotknięciem',
+  'auth.perk3': 'Zapisane adresy, by szybciej płacić',
+  'auth.replicated': 'Twoje konto jest replikowane na wszystkich węzłach sieci ({total}).',
+  'auth.email': 'E-mail',
+  'auth.password': 'Hasło',
+  'auth.showPassword': 'Pokaż hasło',
+  'auth.remember': 'Zapamiętaj mnie',
+  'auth.forgot': 'Nie pamiętasz hasła?',
+  'auth.demo': 'Wersja demonstracyjna: nie tworzymy prawdziwych kont, wystarczą dowolne dane.',
+
+  'login.title': 'Zaloguj się',
+  'login.subtitle': 'Zaloguj się, aby zobaczyć zamówienia, adresy i zapisaną listę.',
+  'login.submit': 'Zaloguj się',
+  'login.noAccount': 'Nie masz konta?',
+  'login.toRegister': 'Zarejestruj się',
+
+  'register.title': 'Załóż konto',
+  'register.subtitle': 'Zapisuj adresy, powtarzaj zamówienia i śledź każdą dostawę.',
+  'register.confirmPassword': 'Powtórz hasło',
+  'register.passwordHint': 'Co najmniej 8 znaków.',
+  'register.terms': 'Akceptuję regulamin i politykę prywatności',
+  'register.submit': 'Załóż konto',
+  'register.hasAccount': 'Masz już konto?',
+  'register.toLogin': 'Zaloguj się',
+
+  'profile.title': 'Mój profil',
+  'profile.memberSince': 'Klient od {date}',
+  'profile.stats.orders': 'Zamówienia',
+  'profile.stats.saved': 'Zaoszczędzono',
+  'profile.logout': 'Wyloguj się',
+  'profile.personal': 'Dane osobowe',
+  'profile.edit': 'Edytuj',
+  'profile.orders': 'Ostatnie zamówienia',
+  'profile.status.delivered': 'Dostarczone',
+  'profile.status.pickedUp': 'Odebrane',
+  'profile.status.cancelled': 'Anulowane',
+  'profile.reorder': 'Zamów ponownie',
+  'profile.reorderFor': 'Zamów ponownie {id}',
+  'profile.addresses': 'Adresy',
+  'profile.address.home': 'Dom',
+  'profile.address.work': 'Praca',
+  'profile.default': 'Domyślny',
+  'profile.addAddress': 'Dodaj adres',
+  'profile.preferences': 'Preferencje',
+  'profile.preferredBranch': 'Preferowany oddział',
+  'profile.notifyOrders': 'Powiadomienia o moich zamówieniach',
+  'profile.notifyOffers': 'Promocje tygodnia',
+  'profile.session': 'Sesja',
+  'profile.sessionText': 'Twoja sesja jest replikowana na {online} z {total} węzłów: gdy jeden padnie, pozostajesz zalogowany.',
+  'profile.demo': 'Profil demonstracyjny: dane są fikcyjne.',
+
+  'serverError.title': 'Coś poszło nie tak po naszej stronie',
+  'serverError.text': 'Serwer nie mógł zrealizować żądania. Twój koszyk i lista są nadal bezpieczne na tym urządzeniu.',
+  'serverError.details': 'Szczegóły techniczne',
+  'serverError.requestId': 'ID żądania',
+  'serverError.node': 'Węzeł',
+  'serverError.time': 'Godzina',
+
   'notFound.title': 'Nie znaleziono strony',
   'notFound.text': 'Szukana strona nie istnieje.',
-  'notFound.home': 'Wróć na start'
+  'notFound.hint': 'Zapytaliśmy wszystkie węzły ({total}) i żaden nie zna tej ścieżki.',
+  'notFound.requested': 'Żądana ścieżka',
+  'notFound.products': 'Przeglądaj produkty'
 };
 
 export default pl;

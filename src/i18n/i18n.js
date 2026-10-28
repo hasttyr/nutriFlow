@@ -91,9 +91,11 @@ export const createTranslator = (locale) => {
   const priceFormat = new Intl.NumberFormat(tag, { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
   const timeFormat = new Intl.DateTimeFormat(tag, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const dateFormat = new Intl.DateTimeFormat(tag, { dateStyle: 'medium' });
 
   const formatNumber = (value) => numberFormat.format(value);
   const formatTime = (timestamp) => timeFormat.format(timestamp);
+  const formatDate = (date) => dateFormat.format(date);
   const formatPrice = (amount) => priceFormat.format(amount);
 
   const t = (key, vars = {}) => {
@@ -112,5 +114,5 @@ export const createTranslator = (locale) => {
   // Picks the current language from a { es, en, pt, pl, it } record, e.g. a product name.
   const localize = (record) => record[locale] ?? record.en;
 
-  return { locale, t, localize, formatNumber, formatPrice, formatTime };
+  return { locale, t, localize, formatNumber, formatPrice, formatTime, formatDate };
 };

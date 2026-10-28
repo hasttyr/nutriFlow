@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';
 import CartProvider from './cart/CartProvider';
 import ListProvider from './list/ListProvider';
 import LocaleProvider from './i18n/LocaleProvider';
@@ -107,9 +108,112 @@ describe('Browsing', () => {
     expect(screen.getByRole('heading', { name: 'Product not found' })).toBeInTheDocument();
   });
 
-  it('shows a 404 page for unknown routes', () => {
-    renderApp('/does-not-exist');
+});
+
+describe('Control views', () => {
+  it('shows a 404 page with the requested route and ways out', async () => {
+    const { user } = renderApp('/does-not-exist');
     expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+    expect(screen.getByTestId('requested-path')).toHaveTextContent('/does-not-exist');
+    expect(screen.getByText('We asked all 3 nodes and none of them knows this route.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'Browse products' }));
+    expect(screen.getByRole('heading', { level: 1, name: 'Products' })).toBeInTheDocument();
+  });
+
+  it('shows a 500 page with the incident details', () => {
+    renderApp('/500');
+    expect(screen.getByRole('heading', { name: 'Something went wrong on our side' })).toBeInTheDocument();
+    expect(screen.getByText(/^req_[a-z0-9]+$/)).toBeInTheDocument();
+    expect(screen.getByText('Chapinero (CHA)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View system status' })).toHaveAttribute('href', '/status');
+  });
+
+  it('shows the 500 page when a screen crashes, and retries it', async () => {
+    // React reports the caught error on the console; keep the test output clean.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    let broken = true;
+    const Flaky = () => {
+      if (broken) throw new Error('boom');
+      return <p>Recovered</p>;
+    };
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <LocaleProvider>
+          <ErrorBoundary>
+            <Flaky />
+          </ErrorBoundary>
+        </LocaleProvider>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('heading', { name: 'Something went wrong on our side' })).toBeInTheDocument();
+    broken = false;
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(screen.getByText('Recovered')).toBeInTheDocument();
+    vi.restoreAllMocks();
+  });
+});
+
+describe('Account', () => {
+  it('logs in to the demo profile', async () => {
+    const { user } = renderApp('/login');
+    expect(screen.getByRole('heading', { level: 1, name: 'Log in' })).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Email'), 'ada@example.com');
+    const password = screen.getByLabelText('Password');
+    await user.type(password, 'secret123');
+    expect(password).toHaveAttribute('type', 'password');
+    await user.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(password).toHaveAttribute('type', 'text');
+    expect(screen.getByRole('button', { name: 'Show password' })).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(screen.getByRole('button', { name: 'Log in' }));
+    expect(screen.getByRole('heading', { level: 1, name: 'My profile' })).toBeInTheDocument();
+  });
+
+  it('registers and opens the demo profile', async () => {
+    const { user } = renderApp('/login');
+    await user.click(screen.getByRole('link', { name: 'Create an account' }));
+    expect(screen.getByRole('heading', { level: 1, name: 'Create your account' })).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Full name'), 'Ada Lovelace');
+    await user.type(screen.getByLabelText('Email'), 'ada@example.com');
+    await user.type(screen.getByLabelText('Mobile'), '3001234567');
+    expect(screen.getByLabelText('Mobile')).toHaveAccessibleDescription('10 digits');
+    await user.type(screen.getByLabelText('Password'), 'secret123');
+    await user.type(screen.getByLabelText('Confirm password'), 'secret123');
+    await user.click(screen.getByLabelText('I accept the terms and privacy policy'));
+    await user.click(screen.getByRole('button', { name: 'Create account' }));
+    expect(screen.getByRole('heading', { level: 1, name: 'My profile' })).toBeInTheDocument();
+  });
+
+  it('shows the demo profile with live session replicas', async () => {
+    const { user } = renderApp('/');
+    await user.click(screen.getByRole('link', { name: 'My account' }));
+    expect(screen.getByRole('heading', { level: 2, name: 'Laura Gómez' })).toBeInTheDocument();
+
+    const orders = screen.getByRole('region', { name: 'Recent orders' });
+    expect(within(orders).getAllByRole('listitem')).toHaveLength(3);
+    expect(within(orders).getByText('Cancelled')).toBeInTheDocument();
+    expect(within(orders).getByRole('link', { name: 'Order NF-CHA-01038 again' })).toHaveAttribute('href', '/products');
+
+    const session = screen.getByRole('region', { name: 'Session' });
+    expect(session).toHaveTextContent('replicated on 3 of 3 nodes');
+    act(() => setNodeStatus('kennedy', 'offline'));
+    expect(session).toHaveTextContent('replicated on 2 of 3 nodes');
+
+    const preferences = screen.getByRole('region', { name: 'Preferences' });
+    await user.click(within(preferences).getByRole('combobox', { name: 'Preferred branch' }));
+    await user.click(screen.getByRole('option', { name: 'Usaquén' }));
+    expect(within(preferences).getByRole('combobox', { name: 'Preferred branch' })).toHaveTextContent('Usaquén');
+    expect(within(preferences).getByRole('switch', { name: 'Updates about my orders' })).toBeChecked();
+    expect(within(preferences).getByRole('switch', { name: 'Weekly deals' })).not.toBeChecked();
+
+    await user.click(screen.getByRole('link', { name: 'Log out' }));
+    expect(screen.getByRole('heading', { level: 1, name: 'Log in' })).toBeInTheDocument();
   });
 });
 

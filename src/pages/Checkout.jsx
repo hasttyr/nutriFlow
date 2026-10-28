@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { CircleCheck, CircleX, Info, PackageOpen, Store, Truck } from 'lucide-react';
+import { CircleCheck, CircleX, PackageOpen, Store, Truck } from 'lucide-react';
 import { useCart } from '../cart/useCart';
 import { deliveryFee } from '../cart/cart';
 import { NODES, getNode } from '../distributed/cluster';
@@ -11,18 +11,12 @@ import { useLocale } from '../i18n/useLocale';
 import TraceList from '../components/TraceList';
 import Glass from '../ui/Glass';
 import StatusDot from '../ui/StatusDot';
-import { fieldInput, fieldLabel, pageHeading, primaryButton, sectionHeading } from '../ui/classes';
+import { fieldLabel, pageHeading, primaryButton, sectionHeading } from '../ui/classes';
+import { Field, Notice } from '../ui/Field';
 
 const initialForm = { name: '', phone: '', address: '', neighborhood: '', notes: '' };
 
 const optionCard = 'flex min-h-11 cursor-pointer items-start gap-3 rounded-2xl bg-white/50 p-4 ring-1 ring-white/80 transition ring-inset hover:bg-white/70 has-checked:bg-white/85 has-checked:ring-2 has-checked:ring-citrus-500';
-
-const Field = ({ id, label, className = '', ...inputProps }) => (
-  <div className={className}>
-    <label htmlFor={id} className={fieldLabel}>{label}</label>
-    <input id={id} name={id} className={fieldInput} {...inputProps} />
-  </div>
-);
 
 const Checkout = () => {
   const { items, clearCart } = useCart();
@@ -234,10 +228,7 @@ const Checkout = () => {
                   </label>
                 ))}
               </div>
-              <p className="mt-5 flex items-start gap-2 rounded-2xl bg-white/60 px-4 py-3 text-sm text-ink/80 ring-1 ring-white/80 ring-inset">
-                <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-citrus-700" />
-                {t('checkout.demoNotice')}
-              </p>
+              <Notice className="mt-5">{t('checkout.demoNotice')}</Notice>
 
               <p className="mt-6 flex items-baseline justify-between gap-3 text-ink tabular-nums lg:hidden" data-testid="mobile-total">
                 <span className="font-semibold">{t('summary.total')}</span>

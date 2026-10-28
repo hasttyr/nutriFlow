@@ -9,6 +9,8 @@ nutriFlow helps you do your groceries ("hacer mercado") in Bogotá: build a shop
 - **Compare branches**: every branch answers with its own price and stock, each at its own latency.
 - **Delivery or pickup**, paid on delivery (demo: nothing is charged).
 - **System status** (`/status`): node health, latency, inventory version, requests, failures, a live call log, and controls to make any node slow or bring it down.
+- **Account screens (demo, not functional)**: `/login`, `/register` and `/profile` (orders, addresses, preferences and a session replicated across the nodes). Any details "log in" and open the same demo profile.
+- **Control views**: a 404 page for unknown routes and a 500 page at `/500`, which also replaces any screen that crashes while rendering.
 - **Five languages** (Spanish, English, Portuguese, Polish, Italian), picked automatically from the browser language or, for English browsers, from the visitor's time zone (e.g. Warsaw → Polish); a manual choice is remembered. Prices in Colombian pesos, liquid-glass UI built 100% with Tailwind, mobile-first.
 
 ## Simulated distributed system

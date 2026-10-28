@@ -22,3 +22,9 @@ export const fieldInput = `w-full rounded-2xl border border-white/80 bg-white/60
 export const pageHeading = 'text-4xl font-semibold tracking-tight text-balance text-ink sm:text-5xl';
 
 export const sectionHeading = 'text-2xl font-semibold tracking-tight text-ink';
+
+// Inline text link inside sentences and form footers.
+export const textLink = `rounded-sm font-semibold text-citrus-700 underline-offset-4 transition hover:text-citrus-800 hover:underline ${focusRing}`;
+
+// Compact clear-glass button for secondary actions inside cards (edit, reorder…).
+export const smallButton = `inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-white/70 bg-white/50 px-4 text-sm font-semibold text-ink shadow-glass-sm hover:bg-white/80 ${pressable}`;
