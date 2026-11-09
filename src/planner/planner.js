@@ -99,17 +99,43 @@ const buildPrompt = ({ text, locale, country, people, pool }) => {
   ].join('\n');
 };
 
-const extractJson = (content) => {
+// Small free models sometimes return almost-JSON (trailing commas, a lost bracket). Try strict,
+// then with trailing commas removed, then pull the fields out with patterns.
+export const extractJson = (content) => {
   const start = content.indexOf('{');
   const end = content.lastIndexOf('}');
   if (start < 0 || end < start) throw new Error('No JSON');
-  return JSON.parse(content.slice(start, end + 1));
+  const text = content.slice(start, end + 1);
+  for (const candidate of [text, text.replace(/,\s*([\]}])/g, '$1')]) {
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      // Try the next repair.
+    }
+  }
+  const unquote = (value) => {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value.slice(1, -1);
+    }
+  };
+  const daysPart = text.slice(text.indexOf('"days"'), text.indexOf('"items"') > 0 ? text.indexOf('"items"') : undefined);
+  const meals = (daysPart.slice(daysPart.indexOf('[')).match(/"(?:[^"\\]|\\.)*"/g) ?? []).map(unquote);
+  const days = [];
+  for (let index = 0; index + 2 < meals.length; index += 3) days.push(meals.slice(index, index + 3));
+  const itemsPart = text.indexOf('"items"') > 0 ? text.slice(text.indexOf('"items"')) : '';
+  const items = [...itemsPart.matchAll(/\[\s*(\d+)\s*,\s*(\d+)\s*\]/g)].map((match) => [Number(match[1]), Number(match[2])]);
+  const summary = text.match(/"summary"\s*:\s*("(?:[^"\\]|\\.)*")/)?.[1];
+  return { summary: summary ? unquote(summary) : null, days, items };
 };
 
 // Keeps only what makes sense: 7 days of strings and items that exist and are sold nearby.
 export const sanitizePlan = (raw, allowedIds, people = 1) => {
-  const days = Array.isArray(raw?.days) ? raw.days.slice(0, 7) : [];
-  if (days.length < 7) throw new Error('Incomplete plan');
+  // A short week (3 to 6 days) is completed by repeating its days in order.
+  const given = Array.isArray(raw?.days) ? raw.days.slice(0, 7) : [];
+  if (given.length < 3) throw new Error('Incomplete plan');
+  const days = Array.from({ length: 7 }, (_, index) => given[index % given.length]);
   const clean = (value) => (typeof value === 'string' ? value.trim().slice(0, 140) : '');
   const merged = new Map();
   (Array.isArray(raw.items) ? raw.items : []).forEach((entry) => {

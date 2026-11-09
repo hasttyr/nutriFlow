@@ -4,7 +4,7 @@ import { DEMO_NODES, getClusterState, getNode, setNodes } from '../distributed/c
 import { carries, catalogAt, priceAt, quoteBasket, stockAt } from '../distributed/inventory';
 import { placeOrder } from '../distributed/orders';
 import { createTranslator } from '../i18n/i18n';
-import { detectDiet, priceBasket, rulePlan, sanitizePlan } from '../planner/planner';
+import { detectDiet, extractJson, priceBasket, rulePlan, sanitizePlan } from '../planner/planner';
 import { decodeShare, encodeShare } from '../share/share';
 import { currencyFor } from './currency';
 import { distanceMeters } from './location';
@@ -119,6 +119,17 @@ describe('weekly planner', () => {
     expect(plan.days[1]).toEqual({ breakfast: 'Avena', lunch: 'Arroz con pollo', dinner: 'Sopa' });
     expect(plan.items).toEqual([{ id: 31, quantity: 2 }, { id: 46, quantity: 6 }]);
     expect(() => sanitizePlan({ days: [] }, new Set(), 1)).toThrow();
+  });
+
+  it('repairs the almost-JSON small models return and completes a short week', () => {
+    // Real answer seen in production: a trailing comma, a lost bracket and only 5 days.
+    const broken = '{"summary":"Plan vegetariano","days":[["Huevos","Lentejas","Arepa"],["Avena","Garbanzos","Tortilla"],["Yogur","Quinoa","Tofu",],"Pan","Frijoles","Arepa"],["Pan","Sopa","Tortilla"]],"items":[[8,1],[48,2],[999,1]]}';
+    const plan = sanitizePlan(extractJson(broken), new Set([8, 48]), 1);
+    expect(plan.summary).toBe('Plan vegetariano');
+    expect(plan.days).toHaveLength(7);
+    expect(plan.days[2]).toEqual({ breakfast: 'Yogur', lunch: 'Quinoa', dinner: 'Tofu' });
+    expect(plan.days[5]).toEqual(plan.days[0]);
+    expect(plan.items).toEqual([{ id: 8, quantity: 1 }, { id: 48, quantity: 2 }]);
   });
 
   it('finds the cheapest store for the basket', async () => {
