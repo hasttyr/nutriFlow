@@ -8,7 +8,7 @@ import { detectDiet, extractJson, priceBasket, rulePlan, sanitizePlan } from '..
 import { decodeShare, encodeShare } from '../share/share';
 import { currencyFor } from './currency';
 import { distanceMeters } from './location';
-import { toNode } from './region';
+import { applyLocation, getRegion, setCountry, toNode } from './region';
 import { findStores, kindOf, syntheticStores } from './stores';
 
 const origin = { lat: 4.6486, lon: -74.0628 };
@@ -92,6 +92,26 @@ describe('currency', () => {
     expect(currencyFor('ZZ')).toBe('USD');
     expect(createTranslator('en', { currency: 'USD', rate: 0.00025 }).formatPrice(20000)).toBe('$5.00');
     expect(createTranslator('es', { currency: 'CLP', rate: 0.24 }).formatPrice(10000)).toMatch(/2\.400/);
+  });
+});
+
+describe('country follows the device', () => {
+  const at = (countryCode, lat) => ({ lat, lon: 10, accuracy: 20, source: 'gps', countryCode });
+
+  it('follows detection, and a hand-picked country holds until the device changes country', () => {
+    applyLocation(at('CO', 4.6), { force: true });
+    expect(getRegion().country).toBe('CO');
+
+    setCountry('IT');
+    applyLocation(at('CO', 4.7), { force: true });
+    expect(getRegion().country).toBe('IT');
+
+    applyLocation(at('pl', 52.2), { force: true });
+    expect(getRegion()).toMatchObject({ country: 'PL', countryPinned: false });
+    expect(window.localStorage.getItem('nutriflow/country')).toBeNull();
+
+    applyLocation(at('JP', 35.6), { force: true });
+    expect(getRegion().country).toBe('JP');
   });
 });
 

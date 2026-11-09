@@ -14,6 +14,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import ServerError from './pages/ServerError';
+import Unavailable from './pages/Unavailable';
+import { isSupported, useRegion } from './geo/region';
 // The map (Leaflet), the planner and the QR code load on demand.
 const StoreMap = lazy(() => import('./pages/StoreMap'));
 const Planner = lazy(() => import('./pages/Planner'));
@@ -22,6 +24,17 @@ import NotFound from './pages/NotFound';
 
 function App() {
   const { pathname } = useLocation();
+  const { country } = useRegion();
+
+  // Outside the countries nutriFlow serves, the whole app is switched off.
+  if (!isSupported(country)) {
+    return (
+      <div className="App">
+        <Backdrop />
+        <Unavailable country={country} />
+      </div>
+    );
+  }
 
   return (
     <div className="App">

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { CircleCheck, CircleX, PackageOpen, Store, Truck } from 'lucide-react';
+import { ChevronDown, CircleCheck, CircleX, Clock, PackageOpen, Store, Truck } from 'lucide-react';
 import { useCart } from '../cart/useCart';
 import { deliveryFee } from '../cart/cart';
 import { NODES, getNode } from '../distributed/cluster';
@@ -11,20 +11,53 @@ import { useLocale } from '../i18n/useLocale';
 import TraceList from '../components/TraceList';
 import Glass from '../ui/Glass';
 import StatusDot from '../ui/StatusDot';
-import { fieldLabel, pageHeading, primaryButton, sectionHeading } from '../ui/classes';
+import { fieldInput, fieldLabel, pageHeading, primaryButton, sectionHeading } from '../ui/classes';
 import { Field, Notice } from '../ui/Field';
+import GlassSelect from '../ui/GlassSelect';
+import { moneyOf, useRegion } from '../geo/region';
+import { countryName } from '../geo/currency';
+import BrandMark from '../payments/BrandMark';
+import CountryPicker from '../components/CountryPicker';
+import PaymentStep from '../payments/PaymentStep';
+import {
+  cardBrand, digitsOf, expiryValid, formatCardNumber, formatExpiry, hasLocalMethods, luhnValid, methodsFor, paymentCode
+} from '../payments/methods';
 
 const initialForm = { name: '', phone: '', address: '', neighborhood: '', notes: '' };
+const initialCard = { number: '', name: '', expiry: '', cvc: '' };
+
+const selectTrigger = 'relative flex min-h-11 w-full items-center rounded-2xl border border-white/80 bg-white/60 py-2.5 pr-10 pl-4 text-ink shadow-[inset_0_1px_3px_rgb(19_32_26/0.1)] transition hover:bg-white/75 aria-expanded:bg-white/85';
+
+const methodHint = (method) => method.hint ?? (method.kind === 'instant' && !method.qr ? 'payment.hint.transfer' : `payment.hint.${method.kind}`);
+
+// Bars drawn from the reference digits, so each voucher gets its own "barcode".
+const Barcode = ({ code }) => {
+  const digits = [...code.replace(/\D/g, '')];
+  const step = 200 / Math.max(digits.length, 1);
+  return (
+    <svg viewBox="0 0 200 40" aria-hidden="true" className="mt-3 h-10 w-full" preserveAspectRatio="none">
+      {digits.map((digit, index) => (
+        <rect key={index} x={index * step} y="0" width={1 + (Number(digit) % 3)} height="40" fill="#13201a" />
+      ))}
+    </svg>
+  );
+};
 
 const optionCard = 'flex min-h-11 cursor-pointer items-start gap-3 rounded-2xl bg-white/50 p-4 ring-1 ring-white/80 transition ring-inset hover:bg-white/70 has-checked:bg-white/85 has-checked:ring-2 has-checked:ring-citrus-500';
 
 const Checkout = () => {
   const { items, clearCart } = useCart();
   const { activeNodeId, nodes } = useCluster();
-  const { t, localize, formatPrice } = useLocale();
+  const { t, locale, localize, formatPrice } = useLocale();
+  const region = useRegion();
   const [fulfillment, setFulfillment] = useState('delivery');
   const [pickupNodeId, setPickupNodeId] = useState(activeNodeId);
-  const [payment, setPayment] = useState('cash');
+  const [paymentId, setPaymentId] = useState(null);
+  const [card, setCard] = useState(initialCard);
+  const [cardError, setCardError] = useState(null);
+  const [bankChoice, setBankChoice] = useState(null);
+  const [blikCode, setBlikCode] = useState('');
+  const [pending, setPending] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [phase, setPhase] = useState('form');
   const [trace, setTrace] = useState([]);
@@ -37,6 +70,13 @@ const Checkout = () => {
   const fee = deliveryFee(subtotal, fulfillment);
   const orderItems = items.map(({ id, quantity }) => ({ id, quantity }));
 
+  // The country picks the methods: its popular local ones first, card always available.
+  const methods = methodsFor(region.country);
+  const method = methods.find((option) => option.id === paymentId) ?? methods[0];
+  const bank = method.banks?.includes(bankChoice) ? bankChoice : method.banks?.[0];
+  const place = countryName(locale, region.country);
+  const brand = cardBrand(card.number);
+
   const fieldProps = (id) => ({
     id,
     value: form[id],
@@ -44,22 +84,58 @@ const Checkout = () => {
     label: t(`checkout.${id}`)
   });
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const setCardField = (id, value) => {
+    setCardError(null);
+    setCard((current) => ({ ...current, [id]: value }));
+  };
+
+  const submitOrder = async (payment, paid) => {
     setTrace([]);
     setPhase('processing');
     try {
       const order = await placeOrder({ items: orderItems, fulfillment, nodeId: pricingNodeId }, setTrace);
       // The total is recomputed at the branch that actually took the order (it may have failed over).
       const orderSubtotal = items.reduce((total, item) => total + priceAt(order.nodeId, item) * item.quantity, 0);
-      setOutcome({ order, requestedNodeId: pricingNodeId, total: orderSubtotal + deliveryFee(orderSubtotal, fulfillment) });
+      setOutcome({ order, payment, requestedNodeId: pricingNodeId, total: orderSubtotal + deliveryFee(orderSubtotal, fulfillment) });
       clearCart();
       setPhase('done');
     } catch (error) {
-      setOutcome({ error });
+      setOutcome({ error, refunded: paid });
       setPhase('error');
     }
   };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (method.kind === 'card') {
+      if (!luhnValid(card.number)) return setCardError({ field: 'cardNumber', message: t('payment.cardInvalid') });
+      if (!expiryValid(card.expiry)) return setCardError({ field: 'cardExpiry', message: t('payment.expiryInvalid') });
+    }
+    const total = subtotal + fee;
+    const payment = {
+      method,
+      amount: formatPrice(total),
+      phone: form.phone,
+      bank,
+      blikCode,
+      card: method.kind === 'card' ? { number: digitsOf(card.number), brand } : null,
+      code: paymentCode(method, total * moneyOf(region).rate)
+    };
+    // A voucher is paid later, so the order goes straight to the stores; everything else pays first.
+    if (method.kind === 'voucher') return submitOrder(payment, false);
+    setPending(payment);
+    setPhase('paying');
+  };
+
+  const handlePaid = ({ approved }) => {
+    if (approved) return submitOrder(pending, true);
+    setOutcome({ error: { reason: 'paymentDeclined' } });
+    setPhase('error');
+  };
+
+  if (phase === 'paying') {
+    return <PaymentStep method={pending.method} payment={pending} amount={pending.amount} onDone={handlePaid} />;
+  }
 
   if (phase === 'processing') {
     return (
@@ -73,7 +149,7 @@ const Checkout = () => {
   }
 
   if (phase === 'done') {
-    const { order, requestedNodeId, total } = outcome;
+    const { order, payment, requestedNodeId, total } = outcome;
     return (
       <div className="px-4 py-10 sm:py-16">
         <Glass tone="solid" className="container mx-auto max-w-xl rounded-3xl p-6 sm:p-8">
@@ -93,7 +169,28 @@ const Checkout = () => {
               {t('order.replicated', { copies: order.copies, total: replicationFactor(), quorum: QUORUM })}
             </p>
             <p className="mt-1 text-sm text-ink/70">{t(`order.eta.${fulfillment}`)}</p>
+            {payment.method.kind !== 'voucher' && (
+              <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/70 py-1 pr-4 pl-1 text-sm font-medium text-ink ring-1 ring-white/80" data-testid="order-payment">
+                <BrandMark id={payment.card?.brand ?? payment.method.id} />
+                {t('payment.paidWith', { method: payment.card ? t('payment.cardLabel', { last4: payment.card.number.slice(-4) }) : payment.method.name })}
+              </p>
+            )}
           </div>
+          {payment.method.kind === 'voucher' && (
+            <div className="mb-6 rounded-2xl bg-white/80 p-4 ring-1 ring-amber-300/70" data-testid="order-voucher">
+              <p className="mb-2 flex flex-wrap items-center gap-3 font-semibold text-ink">
+                <BrandMark id={payment.method.id} />
+                <span className="flex items-center gap-1.5">
+                  <Clock aria-hidden="true" className="size-4 text-amber-700" />
+                  {t('payment.voucherTitle', { method: payment.method.name })}
+                </span>
+              </p>
+              <p className="mb-3 text-sm text-ink/75">{t('payment.voucherText', { amount: formatPrice(total) })}</p>
+              <p className="text-xs font-medium tracking-wide text-ink/60 uppercase">{t('payment.reference')}</p>
+              <p className="font-mono text-base font-semibold break-all text-ink">{payment.code}</p>
+              <Barcode code={payment.code} />
+            </div>
+          )}
           <h2 className="mb-3 text-lg font-semibold text-ink">{t('order.trace')}</h2>
           <TraceList trace={order.trace} />
           <div className="mt-8 text-center">
@@ -113,8 +210,9 @@ const Checkout = () => {
             <CircleX aria-hidden="true" className="mx-auto mb-4 size-12 text-rose-600" strokeWidth={1.75} />
             <h1 className="mb-2 text-2xl font-semibold tracking-tight text-ink">{t('order.errorTitle')}</h1>
             <p className="text-ink/80">{t(`order.error.${error.reason ?? 'unknown'}`, { branch: getNode(error.nodeId ?? pricingNodeId).name })}</p>
+            {outcome.refunded && <p className="mt-2 text-sm text-ink/70">{t('payment.refunded')}</p>}
           </div>
-          <TraceList trace={trace} />
+          {error.reason !== 'paymentDeclined' && <TraceList trace={trace} />}
           <div className="mt-8 text-center">
             <button type="button" onClick={() => setPhase('form')} className={primaryButton}>{t('common.retry')}</button>
           </div>
@@ -220,14 +318,120 @@ const Checkout = () => {
 
             <Glass as="fieldset" tone="solid" className="rounded-3xl p-5 sm:p-6">
               <legend className={`${sectionHeading} float-left mb-4 w-full`}>{t('checkout.payment')}</legend>
-              <div className="clear-both grid gap-3 sm:grid-cols-2">
-                {['cash', 'cardTerminal'].map((method) => (
-                  <label key={method} className={`${optionCard} items-center`}>
-                    <input type="radio" name="payment" value={method} checked={payment === method} onChange={() => setPayment(method)} className="size-5 accent-citrus-600" />
-                    <span className="font-semibold text-ink">{t(`checkout.${method}`)}</span>
+              <div className="clear-both mb-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-ink/70" data-testid="payment-country">
+                  {hasLocalMethods(region.country) ? t('payment.localFor', { country: place }) : t('payment.cardOnly', { country: place })}
+                </p>
+                <span id="payment-country-label" className="sr-only">{t('payment.country')}</span>
+                <CountryPicker labelledBy="payment-country-label" />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {methods.map((option) => (
+                  <label key={option.id} className={`${optionCard} items-center`}>
+                    <input type="radio" name="payment" value={option.id} checked={method.id === option.id} onChange={() => setPaymentId(option.id)} className="size-5 shrink-0 accent-citrus-600" />
+                    <BrandMark id={option.id} />
+                    <span className="min-w-0">
+                      <span className="block font-semibold text-ink">{option.kind === 'card' ? t('payment.card') : option.name}</span>
+                      <span className="block text-sm text-ink/70">{t(methodHint(option))}</span>
+                    </span>
                   </label>
                 ))}
               </div>
+
+              {method.kind === 'card' && (
+                <div className="mt-5 grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label htmlFor="cardNumber" className={fieldLabel}>{t('payment.cardNumber')}</label>
+                    <div className="relative">
+                      <input
+                        id="cardNumber"
+                        name="cardNumber"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="cc-number"
+                        placeholder="4242 4242 4242 4242"
+                        value={card.number}
+                        onChange={(event) => setCardField('number', formatCardNumber(event.target.value))}
+                        aria-invalid={cardError?.field === 'cardNumber' || undefined}
+                        aria-describedby="card-test"
+                        required
+                        className={`${fieldInput} pr-20 font-mono tabular-nums`}
+                      />
+                      {brand && (
+                        <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2">
+                          <BrandMark id={brand} />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Field
+                    id="cardName"
+                    label={t('payment.cardName')}
+                    value={card.name}
+                    onChange={(event) => setCardField('name', event.target.value)}
+                    autoComplete="cc-name"
+                    className="col-span-2"
+                    required
+                  />
+                  <Field
+                    id="cardExpiry"
+                    label={t('payment.cardExpiry')}
+                    value={card.expiry}
+                    onChange={(event) => setCardField('expiry', formatExpiry(event.target.value))}
+                    inputMode="numeric"
+                    autoComplete="cc-exp"
+                    placeholder="12/29"
+                    aria-invalid={cardError?.field === 'cardExpiry' || undefined}
+                    required
+                  />
+                  <Field
+                    id="cardCvc"
+                    label={t('payment.cardCvc')}
+                    value={card.cvc}
+                    onChange={(event) => setCardField('cvc', digitsOf(event.target.value).slice(0, 4))}
+                    inputMode="numeric"
+                    autoComplete="cc-csc"
+                    pattern="[0-9]{3,4}"
+                    placeholder="123"
+                    required
+                  />
+                  {cardError && <p role="alert" className="col-span-2 text-sm font-medium text-rose-700">{cardError.message}</p>}
+                  <p id="card-test" className="col-span-2 text-sm text-ink/65">{t('payment.cardTest')}</p>
+                </div>
+              )}
+
+              {method.banks && (
+                <div className="mt-5">
+                  <p id="bank-label" className={fieldLabel}>{t('payment.bank')}</p>
+                  <GlassSelect
+                    value={bank}
+                    options={method.banks.map((name) => ({ value: name, label: name }))}
+                    onChange={setBankChoice}
+                    labelledBy="bank-label"
+                    className={selectTrigger}
+                  >
+                    {bank}
+                    <ChevronDown aria-hidden="true" className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-ink/70 transition-transform duration-200 in-aria-expanded:rotate-180" />
+                  </GlassSelect>
+                </div>
+              )}
+
+              {method.kind === 'code' && (
+                <Field
+                  id="blikCode"
+                  label={t('payment.blikCode')}
+                  hint={t('payment.blikHint')}
+                  value={blikCode}
+                  onChange={(event) => setBlikCode(digitsOf(event.target.value).slice(0, 6))}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="[0-9]{6}"
+                  placeholder="123456"
+                  className="mt-5 max-w-48"
+                  required
+                />
+              )}
+
               <Notice className="mt-5">{t('checkout.demoNotice')}</Notice>
 
               <p className="mt-6 flex items-baseline justify-between gap-3 text-ink tabular-nums lg:hidden" data-testid="mobile-total">

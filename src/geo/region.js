@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { DEMO_NODES, setNodes } from '../distributed/cluster';
 import { DEFAULT_COUNTRY, FALLBACK_RATES, COUNTRY_CURRENCY, currencyFor, loadRates } from './currency';
-import { distanceMeters, locateByGps, locateByIp, locateByTimeZone, reverseGeocode } from './location';
+import { distanceMeters, locateByGps, locateByIp, locateByTimeZone, reverseGeocode, watchGps } from './location';
 import { findStores, kindCategories, kindLabel, storeCode } from './stores';
 
 // The shopper's region: where they are, which country (and so currency) they shop in, and the
@@ -62,6 +62,9 @@ export const moneyOf = (region = state) => {
   return { currency, rate: region.rates[currency] ?? FALLBACK_RATES[currency] ?? 1 };
 };
 
+// The app only operates in the countries it has a currency (and payment methods) for.
+export const isSupported = (country) => Boolean(COUNTRY_CURRENCY[country]);
+
 export const setCountry = (country) => {
   write(COUNTRY_KEY, country);
   setState({ country, countryPinned: true });
@@ -95,13 +98,25 @@ const refreshStores = async (location) => {
 };
 
 // Keeps the most precise fix: an IP answer never replaces GPS or a point the shopper chose.
-const applyLocation = (location, { force = false } = {}) => {
+// A detected country the app does not serve is kept too, so the app can say it is unavailable there.
+// A country picked by hand wins over detection, until the shopper is detected in another country:
+// then the app follows them there (currency, payment methods, availability).
+export const applyLocation = (location, { force = false } = {}) => {
   const current = state.location;
   if (!force && current && PRECISION[current.source] > PRECISION[location.source]) return false;
-  const merged = { ...location, city: location.city ?? current?.city, countryCode: location.countryCode ?? current?.countryCode };
+  const merged = { ...location, city: location.city ?? current?.city, countryCode: location.countryCode?.toUpperCase() ?? current?.countryCode };
+  const moved = Boolean(current?.countryCode && merged.countryCode && merged.countryCode !== current.countryCode);
+  if (moved && state.countryPinned) {
+    try {
+      window.localStorage.removeItem(COUNTRY_KEY);
+    } catch {
+      // Storage can be unavailable.
+    }
+  }
+  const follow = merged.countryCode && (!state.countryPinned || moved);
   setState({
     location: merged,
-    ...(state.countryPinned || !merged.countryCode || !COUNTRY_CURRENCY[merged.countryCode] ? {} : { country: merged.countryCode })
+    ...(follow ? { country: merged.countryCode, countryPinned: false } : {})
   });
   if (merged.source !== 'timezone' && merged.source !== 'default') write(LOCATION_KEY, merged);
   return true;
@@ -116,14 +131,20 @@ const placeFor = async (location) => {
   }
 };
 
+// A GPS fix becomes the location; city and country follow once the point is reverse-geocoded.
+let lastGps = null;
+const applyGps = async (fix) => {
+  lastGps = fix;
+  applyLocation(fix, { force: true });
+  refreshStores(fix);
+  const placed = await placeFor(fix);
+  if (state.location?.source === 'gps' && state.location.lat === fix.lat) applyLocation(placed, { force: true });
+};
+
 export const locatePrecisely = async () => {
   setState({ locating: true, gpsError: null });
   try {
-    const fix = await locateByGps();
-    applyLocation(fix, { force: true });
-    refreshStores(fix);
-    const placed = await placeFor(fix);
-    if (state.location?.source === 'gps') applyLocation(placed, { force: true });
+    await applyGps(await locateByGps());
   } catch (error) {
     setState({ gpsError: error.message });
   } finally {
@@ -140,6 +161,7 @@ export const setManualLocation = async (lat, lon) => {
 };
 
 let started = false;
+let stopWatch = () => {};
 
 // Boot sequence: saved fix → time-zone guess → IP → GPS. Each later step only wins if more precise.
 export const startRegion = () => {
@@ -164,12 +186,33 @@ export const startRegion = () => {
     });
 
   if (saved?.source !== 'manual') locatePrecisely();
+
+  // Later moves of the device. Tiny GPS jitter is ignored; a point picked on the map only gives
+  // way when the device itself really moves (over 1 km).
+  stopWatch = watchGps((fix) => {
+    if (lastGps && distanceMeters(lastGps, fix) < 100) return;
+    if (state.location?.source === 'manual' && (!lastGps || distanceMeters(lastGps, fix) < 1000)) {
+      lastGps = fix;
+      return;
+    }
+    applyGps(fix);
+  });
 };
 
 // Tests and the "reset" control go back to the demo branches.
 export const resetRegion = () => {
   started = false;
+  stopWatch();
+  stopWatch = () => {};
+  lastGps = null;
   storesRequest += 1;
   setNodes(DEMO_NODES, 'demo');
-  setState({ location: null, stores: [], storesStatus: 'idle', storesCenter: null });
+  setState({
+    location: null,
+    country: pinnedCountry() ?? DEFAULT_COUNTRY,
+    countryPinned: pinnedCountry() !== null,
+    stores: [],
+    storesStatus: 'idle',
+    storesCenter: null
+  });
 };

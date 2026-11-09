@@ -11,6 +11,7 @@ import { STORAGE_KEY } from './cart/cart';
 import { STORAGE_KEY as LIST_KEY } from './list/list';
 import { STORAGE_KEY as LOCALE_KEY } from './i18n/i18n';
 import { setNodeStatus } from './distributed/cluster';
+import { applyLocation, setCountry } from './geo/region';
 
 const renderApp = (path = '/') => {
   const user = userEvent.setup();
@@ -255,10 +256,19 @@ describe('Checkout across the cluster', () => {
     const { user } = renderApp('/checkout');
     expect(screen.getByTestId('checkout-total')).toHaveTextContent('COP 13,500');
 
+    expect(screen.getByTestId('payment-country')).toHaveTextContent('Popular in Colombia');
+    expect(screen.getByRole('radio', { name: /Nequi/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /PSE/ })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Credit or debit card/ })).toBeInTheDocument();
+
     await fillDelivery(user);
     await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    expect(screen.getByRole('heading', { name: 'Pay with Nequi' })).toBeInTheDocument();
+    expect(screen.getByText(/phone 3001234567/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Approve' }));
 
     expect(await screen.findByRole('heading', { name: 'Order confirmed!' })).toBeInTheDocument();
+    expect(screen.getByTestId('order-payment')).toHaveTextContent('Paid with Nequi');
     expect(screen.getByRole('status')).toHaveTextContent(/Order NF-CHA-\d{5}/);
     expect(screen.getByTestId('order-replication')).toHaveTextContent('Replicated on 3 of 3 nodes (quorum 2)');
     expect(within(screen.getByTestId('order-trace')).getAllByRole('listitem')).toHaveLength(7);
@@ -271,6 +281,7 @@ describe('Checkout across the cluster', () => {
     const { user } = renderApp('/checkout');
     await fillDelivery(user);
     await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    await user.click(screen.getByRole('button', { name: 'Approve' }));
 
     expect(await screen.findByText('Chapinero could not take it; Usaquén did.')).toBeInTheDocument();
     expect(screen.getByTestId('order-replication')).toHaveTextContent('Replicated on 2 of 3 nodes');
@@ -285,8 +296,10 @@ describe('Checkout across the cluster', () => {
     await user.type(screen.getByLabelText('Full name'), 'Ada');
     await user.type(screen.getByLabelText('Mobile'), '3001234567');
     await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    await user.click(screen.getByRole('button', { name: 'Approve' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Kennedy does not have the whole order.');
+    expect(screen.getByRole('alert')).toHaveTextContent('the charge was reversed');
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(screen.getByRole('button', { name: 'Place Order' })).toBeInTheDocument();
   });
@@ -300,10 +313,117 @@ describe('Checkout across the cluster', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
+  it('stops the order when the shopper rejects the wallet charge', async () => {
+    seedCart([{ id: 1, quantity: 1 }]);
+    const { user } = renderApp('/checkout');
+    await fillDelivery(user);
+    await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    await user.click(screen.getByRole('button', { name: 'Reject' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('The payment was declined.');
+    expect(screen.queryByTestId('order-trace')).not.toBeInTheDocument();
+  });
+
+  it('pays by card, and declines the 0002 test card', async () => {
+    seedCart([{ id: 1, quantity: 1 }]);
+    const { user } = renderApp('/checkout');
+    await fillDelivery(user);
+    await user.click(screen.getByRole('radio', { name: /Credit or debit card/ }));
+    await user.type(screen.getByLabelText('Card number'), '4000000000000002');
+    expect(screen.getByLabelText('Card number')).toHaveValue('4000 0000 0000 0002');
+    await user.type(screen.getByLabelText('Name on card'), 'Ada Lovelace');
+    await user.type(screen.getByLabelText('Expiry (MM/YY)'), '1299');
+    await user.type(screen.getByLabelText('CVC'), '123');
+    await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('The payment was declined.');
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await user.clear(screen.getByLabelText('Card number'));
+    await user.type(screen.getByLabelText('Card number'), '4242424242424241');
+    await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Check the card number.');
+
+    await user.clear(screen.getByLabelText('Card number'));
+    await user.type(screen.getByLabelText('Card number'), '4242424242424242');
+    await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    expect(await screen.findByRole('heading', { name: 'Order confirmed!' })).toBeInTheDocument();
+    expect(screen.getByTestId('order-payment')).toHaveTextContent('Paid with card •••• 4242');
+  });
+
+  it('offers Pix and Boleto in Brazil', async () => {
+    setCountry('BR');
+    seedCart([{ id: 1, quantity: 1 }]);
+    const { user } = renderApp('/checkout');
+    expect(screen.getByRole('radio', { name: /Pix/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /Boleto/ })).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Nequi/ })).not.toBeInTheDocument();
+    await fillDelivery(user);
+    await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    expect(screen.getByTestId('payment-code')).toHaveTextContent(/^00020126.*BR\.GOV\.BCB\.PIX/);
+    await user.click(screen.getByRole('button', { name: /paid \(simulate\)/ }));
+    expect(await screen.findByTestId('order-payment')).toHaveTextContent('Paid with Pix');
+  });
+
+  it('gives a voucher reference for OXXO in Mexico', async () => {
+    setCountry('MX');
+    seedCart([{ id: 1, quantity: 1 }]);
+    const { user } = renderApp('/checkout');
+    await fillDelivery(user);
+    await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    expect(await screen.findByTestId('order-voucher')).toHaveTextContent('Awaiting payment with OXXO Pay');
+  });
+
+  it('only takes cards where there are no local methods', () => {
+    setCountry('FR');
+    seedCart([{ id: 1, quantity: 1 }]);
+    renderApp('/checkout');
+    expect(screen.getByTestId('payment-country')).toHaveTextContent('In France you pay by card.');
+    expect(document.querySelectorAll('input[name="payment"]')).toHaveLength(1);
+  });
+
+  it('switches the methods when the shopper picks another country at checkout', async () => {
+    seedCart([{ id: 1, quantity: 1 }]);
+    const { user } = renderApp('/checkout');
+    const methods = () => [...document.querySelectorAll('input[name="payment"]')].map((input) => input.value);
+    expect(methods()).toEqual(['nequi', 'daviplata', 'pse', 'card']);
+
+    const regions = { Poland: ['blik', 'p24', 'payu', 'card'], Italy: ['satispay', 'bancomatpay', 'postepay', 'paypal', 'card'], 'United States': ['paypal', 'venmo', 'cashapp', 'card'] };
+    for (const [country, expected] of Object.entries(regions)) {
+      await user.click(screen.getByRole('combobox', { name: 'Paying from' }));
+      await user.click(screen.getByRole('option', { name: new RegExp(`^${country}`) }));
+      expect(methods(), country).toEqual(expected);
+    }
+  });
+
+  it('asks for the BLIK code in Poland', async () => {
+    setCountry('PL');
+    seedCart([{ id: 1, quantity: 1 }]);
+    const { user } = renderApp('/checkout');
+    await fillDelivery(user);
+    await user.type(screen.getByLabelText('BLIK code'), '777123');
+    await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    expect(screen.getByText(/code 777123/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Approve' }));
+    expect(await screen.findByTestId('order-payment')).toHaveTextContent('Paid with BLIK');
+  });
+
   it('asks the user to shop first when checking out with an empty cart', () => {
     renderApp('/checkout');
     expect(screen.getByText('Your cart is empty')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Place Order' })).not.toBeInTheDocument();
+  });
+});
+
+describe('Countries nutriFlow does not serve', () => {
+  it('switches the app off and lets a demo pick a served country', async () => {
+    act(() => {
+      applyLocation({ lat: 35.68, lon: 139.69, accuracy: 5000, source: 'ip', countryCode: 'JP' });
+    });
+    const { user } = renderApp('/products');
+    expect(screen.getByRole('heading', { name: 'nutriFlow is not available in Japan' })).toBeInTheDocument();
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('combobox', { name: 'Simulate another country (demo)' }));
+    await user.click(screen.getByRole('option', { name: 'Colombia' }));
+    expect(screen.queryByText(/is not available/)).not.toBeInTheDocument();
   });
 });
 

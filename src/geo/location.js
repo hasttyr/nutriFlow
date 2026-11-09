@@ -30,6 +30,18 @@ export const locateByGps = () =>
     );
   });
 
+// Keeps listening to the device position, so a real move (or a DevTools "Sensors" override)
+// reaches the app without a reload. Returns a function that stops listening.
+export const watchGps = (onFix, onError = () => {}) => {
+  if (!navigator.geolocation?.watchPosition) return () => {};
+  const id = navigator.geolocation.watchPosition(
+    ({ coords }) => onFix({ lat: coords.latitude, lon: coords.longitude, accuracy: Math.round(coords.accuracy), source: 'gps' }),
+    (error) => onError(new Error(error.code === 1 ? 'denied' : 'unavailable')),
+    { enableHighAccuracy: true, maximumAge: 0 }
+  );
+  return () => navigator.geolocation.clearWatch(id);
+};
+
 // City and country for a point.
 export const reverseGeocode = async (lat, lon, language = 'es') => {
   const data = await fetchJson(

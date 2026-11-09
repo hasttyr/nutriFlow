@@ -13,6 +13,15 @@ export const DEFAULT_COUNTRY = 'CO';
 
 export const currencyFor = (country) => COUNTRY_CURRENCY[country] ?? 'USD';
 
+// A country's name in the interface language, e.g. ("pl", "IT") → "Włochy".
+export const countryName = (locale, code) => {
+  try {
+    return new Intl.DisplayNames([locale], { type: 'region' }).of(code);
+  } catch {
+    return code;
+  }
+};
+
 // Units of each currency per 1 COP. Used when the live rates service does not answer.
 export const FALLBACK_RATES = {
   COP: 1, USD: 0.00025, EUR: 0.00022, MXN: 0.0046, ARS: 0.29, CLP: 0.24, PEN: 0.00094, VES: 0.034, UYU: 0.0103,

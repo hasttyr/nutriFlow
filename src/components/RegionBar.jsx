@@ -1,37 +1,16 @@
-import { ChevronDown, Crosshair, Globe2, LoaderCircle, MapPin } from 'lucide-react';
-import { COUNTRIES, currencyFor } from '../geo/currency';
-import { locatePrecisely, setCountry, useRegion } from '../geo/region';
+import { Crosshair, LoaderCircle, MapPin } from 'lucide-react';
+import { locatePrecisely, useRegion } from '../geo/region';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
-import GlassSelect from '../ui/GlassSelect';
+import { countryName } from '../geo/currency';
+import CountryPicker from './CountryPicker';
 import { smallButton } from '../ui/classes';
-
-const countryName = (locale, code) => {
-  try {
-    return new Intl.DisplayNames([locale], { type: 'region' }).of(code);
-  } catch {
-    return code;
-  }
-};
 
 // Where the shopper is (and how precisely we know it), plus the country that sets the currency.
 const RegionBar = () => {
   const { t, locale } = useLocale();
   const region = useRegion();
   const { location } = region;
-
-  const options = COUNTRIES.map((code) => ({ value: code, label: countryName(locale, code), code }))
-    .sort((a, b) => a.label.localeCompare(b.label, locale))
-    .map(({ value, label }) => ({
-      value,
-      label,
-      content: (
-        <span className="flex items-center justify-between gap-6">
-          {label}
-          <span aria-hidden="true" className="text-xs font-semibold text-ink/55">{currencyFor(value)}</span>
-        </span>
-      )
-    }));
 
   return (
     <Glass className="mb-6 flex flex-col gap-3 rounded-3xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between" data-testid="region-bar">
@@ -58,19 +37,7 @@ const RegionBar = () => {
           </button>
         )}
         <span id="country-label" className="sr-only">{t('region.country')}</span>
-        <GlassSelect
-          value={region.country}
-          options={options}
-          onChange={setCountry}
-          labelledBy="country-label"
-          align="end"
-          className="relative flex min-h-11 items-center gap-2 rounded-full border border-white/80 bg-white/70 py-2 pr-9 pl-3 text-sm font-semibold text-ink shadow-glass-sm transition hover:bg-white/90"
-        >
-          <Globe2 aria-hidden="true" className="size-4 text-ink/70" />
-          <span className="max-w-40 truncate">{countryName(locale, region.country)}</span>
-          <span className="text-ink/60">· {currencyFor(region.country)}</span>
-          <ChevronDown aria-hidden="true" className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-ink/70" />
-        </GlassSelect>
+        <CountryPicker labelledBy="country-label" />
       </div>
     </Glass>
   );

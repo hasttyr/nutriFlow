@@ -125,6 +125,9 @@ export const record = (entry) =>
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms * simulation.latencyScale));
 
+// A pause that follows the simulation speed (zero in tests), for other simulated services.
+export const simulatedWait = sleep;
+
 // One request/response hop to a service hosted on a node.
 export const rpc = async (nodeId, service, op, handler) => {
   const node = state.nodes[nodeId];

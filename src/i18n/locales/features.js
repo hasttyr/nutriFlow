@@ -209,7 +209,24 @@ const features = {
     'Scrivi la tua dieta e ricevi menù, lista della spesa e il negozio vicino più economico.'
   ),
   'home.local': L('Productos de tu zona', 'Local products', 'Produtos da sua região', 'Produkty z twojej okolicy', 'Prodotti della tua zona'),
-  'home.from': L('desde {price}', 'from {price}', 'a partir de {price}', 'od {price}', 'da {price}')
+  'home.from': L('desde {price}', 'from {price}', 'a partir de {price}', 'od {price}', 'da {price}'),
+
+  'unavailable.title': L(
+    'nutriFlow no está disponible en {country}',
+    'nutriFlow is not available in {country}',
+    'O nutriFlow não está disponível em {country}',
+    'nutriFlow nie jest dostępny w kraju: {country}',
+    'nutriFlow non è disponibile in {country}'
+  ),
+  'unavailable.text': L(
+    'Detectamos que estás en {country}. Por ahora solo operamos en estos países:',
+    'We detected that you are in {country}. For now we only operate in these countries:',
+    'Detectamos que você está em {country}. Por enquanto só operamos nestes países:',
+    'Wykryliśmy, że jesteś w kraju: {country}. Na razie działamy tylko w tych krajach:',
+    'Abbiamo rilevato che sei in {country}. Per ora operiamo solo in questi paesi:'
+  ),
+  'unavailable.simulate': L('Simular desde otro país (demo)', 'Simulate another country (demo)', 'Simular outro país (demo)', 'Symuluj inny kraj (demo)', 'Simula un altro paese (demo)'),
+  'unavailable.pick': L('Elegir país', 'Choose a country', 'Escolher país', 'Wybierz kraj', 'Scegli un paese')
 };
 
 // { key: { es, en, … } } → { es: { key: … }, en: { key: … }, … }
