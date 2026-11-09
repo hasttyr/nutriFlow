@@ -1,4 +1,5 @@
 import messages from './messages';
+import { fractionDigits } from '../geo/currency';
 
 export const LOCALES = ['es', 'en', 'pt', 'pl', 'it'];
 export const STORAGE_KEY = 'nutriflow/locale';
@@ -84,11 +85,13 @@ export const saveLocale = (locale) => {
   }
 };
 
-export const createTranslator = (locale) => {
+// Catalog prices are Colombian pesos; `money` converts them into the shopper's currency.
+export const createTranslator = (locale, money = { currency: 'COP', rate: 1 }) => {
   const tag = intlTags[locale];
   const pluralRules = new Intl.PluralRules(tag);
   const numberFormat = new Intl.NumberFormat(tag);
-  const priceFormat = new Intl.NumberFormat(tag, { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+  const digits = fractionDigits(money.currency);
+  const priceFormat = new Intl.NumberFormat(tag, { style: 'currency', currency: money.currency, minimumFractionDigits: digits, maximumFractionDigits: digits });
 
   const timeFormat = new Intl.DateTimeFormat(tag, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const dateFormat = new Intl.DateTimeFormat(tag, { dateStyle: 'medium' });
@@ -96,7 +99,7 @@ export const createTranslator = (locale) => {
   const formatNumber = (value) => numberFormat.format(value);
   const formatTime = (timestamp) => timeFormat.format(timestamp);
   const formatDate = (date) => dateFormat.format(date);
-  const formatPrice = (amount) => priceFormat.format(amount);
+  const formatPrice = (amount) => priceFormat.format(amount * money.rate);
 
   const t = (key, vars = {}) => {
     const entry = messages[locale][key] ?? messages.en[key];
@@ -114,5 +117,5 @@ export const createTranslator = (locale) => {
   // Picks the current language from a { es, en, pt, pl, it } record, e.g. a product name.
   const localize = (record) => record[locale] ?? record.en;
 
-  return { locale, t, localize, formatNumber, formatPrice, formatTime, formatDate };
+  return { locale, currency: money.currency, t, localize, formatNumber, formatPrice, formatTime, formatDate };
 };

@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router';
-import { CircleUserRound, House, Leaf, ListChecks, ShoppingBag, Store } from 'lucide-react';
+import { CircleUserRound, Leaf, ListChecks, Map as MapIcon, ShoppingBag, Store, WandSparkles } from 'lucide-react';
 import { useCart } from '../cart/useCart';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
@@ -40,13 +40,17 @@ const Header = () => {
         </Link>
         <div className="flex items-center gap-1 sm:gap-2">
           <nav aria-label={t('nav.label')} className={navClass}>
-            <NavLink to="/" end className={tabClass}>
-              <House aria-hidden="true" className="size-5 md:hidden" strokeWidth={1.9} />
-              {t('nav.home')}
+            <NavLink to="/map" className={tabClass}>
+              <MapIcon aria-hidden="true" className="size-5 md:hidden" strokeWidth={1.9} />
+              {t('nav.map')}
             </NavLink>
             <NavLink to="/products" className={tabClass}>
               <Store aria-hidden="true" className="size-5 md:hidden" strokeWidth={1.9} />
               {t('nav.products')}
+            </NavLink>
+            <NavLink to="/planner" className={tabClass}>
+              <WandSparkles aria-hidden="true" className="size-5 md:hidden" strokeWidth={1.9} />
+              {t('nav.planner')}
             </NavLink>
             <NavLink to="/list" className={tabClass}>
               <ListChecks aria-hidden="true" className="size-5 md:hidden" strokeWidth={1.9} />

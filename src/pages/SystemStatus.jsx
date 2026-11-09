@@ -1,6 +1,6 @@
 import { Activity, ArrowRightLeft } from 'lucide-react';
 import { NODES, NODE_STATUSES, getNode, onlineCount, setNodeStatus } from '../distributed/cluster';
-import { QUORUM } from '../distributed/orders';
+import { QUORUM, replicationFactor } from '../distributed/orders';
 import { useCluster } from '../distributed/hooks';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
@@ -23,7 +23,8 @@ const SystemStatus = () => {
     <div className="px-4 py-8 sm:py-12">
       <div className="container mx-auto">
         <h1 className={`${pageHeading} mb-2`}>{t('status.title')}</h1>
-        <p className="mb-6 max-w-3xl text-ink/75">{t('status.subtitle')}</p>
+        <p className="mb-2 max-w-3xl text-ink/75">{t('status.subtitle')}</p>
+        <p className="mb-6 max-w-3xl text-sm font-medium text-ink/70" data-testid="cluster-members">{t(`status.members.${cluster.members}`)}</p>
 
         <div className="mb-6 flex flex-wrap gap-3">
           <Glass className="flex items-center gap-2 rounded-full px-4 py-2 font-semibold text-ink tabular-nums" data-testid="cluster-online">
@@ -31,7 +32,7 @@ const SystemStatus = () => {
             {t('status.online', { online, total: NODES.length })}
           </Glass>
           <Glass className="rounded-full px-4 py-2 font-semibold text-ink tabular-nums">
-            {t('status.quorum', { quorum: QUORUM, total: NODES.length })}
+            {t('status.quorum', { quorum: QUORUM, total: replicationFactor() })}
           </Glass>
         </div>
 

@@ -6,9 +6,11 @@ import CartProvider from './cart/CartProvider';
 import ListProvider from './list/ListProvider';
 import LocaleProvider from './i18n/LocaleProvider';
 import { startHeartbeat } from './distributed/cluster';
+import { startRegion } from './geo/region';
 import './index.css';
 
 startHeartbeat();
+startRegion();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

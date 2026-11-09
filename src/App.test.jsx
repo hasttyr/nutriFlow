@@ -53,14 +53,14 @@ describe('Browsing', () => {
 
   it('loads the catalog from the active branch node', async () => {
     renderApp('/products');
-    expect(await screen.findByText('18 products')).toBeInTheDocument();
+    expect(await screen.findByText('65 products')).toBeInTheDocument();
     expect(screen.getByTestId('data-source')).toHaveTextContent(/Chapinero inventory · \d+ ms/);
     expect(screen.getByRole('button', { name: 'Add Ground coffee to cart' })).toBeDisabled();
   });
 
   it('searches ignoring accents and filters by category', async () => {
     const { user } = renderApp('/products');
-    await screen.findByText('18 products');
+    await screen.findByText('65 products');
 
     const search = screen.getByLabelText('Search products');
     await user.type(search, 'cafe');
@@ -69,7 +69,7 @@ describe('Browsing', () => {
 
     // The Spanish name works too while the interface is in English.
     await user.clear(search);
-    await user.type(search, 'LECHE');
+    await user.type(search, 'LECHE ENTERA');
     expect(screen.getByText('1 product')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Whole milk' })).toBeInTheDocument();
 
@@ -80,7 +80,7 @@ describe('Browsing', () => {
     await user.clear(search);
     await user.click(screen.getByRole('button', { name: 'Dairy & eggs' }));
     expect(screen.getByRole('button', { name: 'Dairy & eggs' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('3 products')).toBeInTheDocument();
+    expect(screen.getByText('9 products')).toBeInTheDocument();
   });
 
   it('reads a branch through a replica when it is down', async () => {
@@ -220,7 +220,7 @@ describe('Account', () => {
 describe('Shopping list and cart', () => {
   it('builds a list and moves what is missing to the cart', async () => {
     const { user } = renderApp('/products');
-    await screen.findByText('18 products');
+    await screen.findByText('65 products');
     await user.click(screen.getByRole('button', { name: 'Add Bananas to the list' }));
     await user.click(screen.getByRole('button', { name: 'Add Whole milk to the list' }));
     await user.click(screen.getByRole('link', { name: 'List' }));
@@ -395,7 +395,7 @@ describe('Language picker', () => {
 describe('Branch picker', () => {
   it('lists every branch with its health and switches the active one', async () => {
     const { user } = renderApp('/products');
-    await screen.findByText('18 products');
+    await screen.findByText('65 products');
     setNodeStatus('kennedy', 'slow');
 
     await user.click(screen.getByRole('combobox', { name: 'Branch' }));

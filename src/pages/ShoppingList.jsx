@@ -8,6 +8,7 @@ import { useCart } from '../cart/useCart';
 import { useList } from '../list/useList';
 import { useLocale } from '../i18n/useLocale';
 import BranchBar from '../components/BranchBar';
+import ShareDialog from '../components/ShareDialog';
 import Glass from '../ui/Glass';
 import ProductIcon from '../ui/ProductIcon';
 import { glassButton, pageHeading, primaryButton } from '../ui/classes';
@@ -87,6 +88,7 @@ const ShoppingList = () => {
                 <p className="text-2xl font-semibold text-ink tabular-nums" data-testid="list-estimate">{formatPrice(estimate)}</p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
+                <ShareDialog items={list.entries.map(({ id, quantity }) => ({ id, quantity }))} />
                 {done > 0 && (
                   <button type="button" onClick={list.clearChecked} className={glassButton}>{t('list.clearChecked')}</button>
                 )}

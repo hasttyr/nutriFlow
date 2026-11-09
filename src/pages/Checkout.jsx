@@ -5,7 +5,7 @@ import { useCart } from '../cart/useCart';
 import { deliveryFee } from '../cart/cart';
 import { NODES, getNode } from '../distributed/cluster';
 import { missingAt, priceAt } from '../distributed/inventory';
-import { QUORUM, placeOrder } from '../distributed/orders';
+import { QUORUM, placeOrder, replicationFactor } from '../distributed/orders';
 import { useCluster } from '../distributed/hooks';
 import { useLocale } from '../i18n/useLocale';
 import TraceList from '../components/TraceList';
@@ -90,7 +90,7 @@ const Checkout = () => {
               </p>
             )}
             <p className="mt-1 text-sm text-ink/70" data-testid="order-replication">
-              {t('order.replicated', { copies: order.copies, total: NODES.length, quorum: QUORUM })}
+              {t('order.replicated', { copies: order.copies, total: replicationFactor(), quorum: QUORUM })}
             </p>
             <p className="mt-1 text-sm text-ink/70">{t(`order.eta.${fulfillment}`)}</p>
           </div>

@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import { Routes, Route, useLocation } from 'react-router';
 import Backdrop from './components/Backdrop';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -13,6 +14,10 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import ServerError from './pages/ServerError';
+// The map (Leaflet), the planner and the QR code load on demand.
+const StoreMap = lazy(() => import('./pages/StoreMap'));
+const Planner = lazy(() => import('./pages/Planner'));
+const SharedImport = lazy(() => import('./pages/SharedImport'));
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -25,6 +30,7 @@ function App() {
       <main className="pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-0">
         {/* Keyed by route so leaving a crashed screen clears the error. */}
         <ErrorBoundary key={pathname}>
+          <Suspense fallback={<p className="px-4 py-12 text-center text-ink/60">…</p>}>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/products" element={<ProductList />} />
@@ -33,12 +39,16 @@ function App() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/status" element={<SystemStatus />} />
+            <Route path="/map" element={<StoreMap />} />
+            <Route path="/planner" element={<Planner />} />
+            <Route path="/share" element={<SharedImport />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/500" element={<ServerError />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </ErrorBoundary>
       </main>
     </div>

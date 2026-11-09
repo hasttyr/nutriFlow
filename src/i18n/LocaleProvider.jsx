@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LocaleContext } from './LocaleContext';
 import { createTranslator, loadLocale, saveLocale } from './i18n';
+import { moneyOf, useRegion } from '../geo/region';
 
 const LocaleProvider = ({ children }) => {
   const [locale, setCurrentLocale] = useState(loadLocale);
+  const { currency, rate } = moneyOf(useRegion());
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -15,7 +17,7 @@ const LocaleProvider = ({ children }) => {
     setCurrentLocale(next);
   }, []);
 
-  const value = useMemo(() => ({ ...createTranslator(locale), setLocale }), [locale, setLocale]);
+  const value = useMemo(() => ({ ...createTranslator(locale, { currency, rate }), setLocale }), [locale, currency, rate, setLocale]);
 
   return <LocaleContext value={value}>{children}</LocaleContext>;
 };

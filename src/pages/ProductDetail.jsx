@@ -21,6 +21,8 @@ const BranchComparison = ({ product }) => {
   const { t, formatPrice } = useLocale();
   const { activeNodeId, nodes } = useCluster();
   const [offers, setOffers] = useState({});
+  // Ask again when the cluster membership changes (e.g. nearby stores replace the demo branches).
+  const members = Object.keys(nodes).join();
 
   useEffect(() => {
     let cancelled = false;
@@ -30,7 +32,7 @@ const BranchComparison = ({ product }) => {
     return () => {
       cancelled = true;
     };
-  }, [product]);
+  }, [product, members]);
 
   const prices = Object.values(offers).filter((offer) => !offer.error && offer.stock > 0).map((offer) => offer.price);
   const best = prices.length ? Math.min(...prices) : null;

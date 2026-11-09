@@ -20,10 +20,14 @@ Every branch is a visible node with its own inventory replica; the shopper sees 
 
 ## Capabilities and Constraints
 
-- Routes: `/`, `/products`, `/product/:id`, `/list`, `/cart`, `/checkout`, `/status`, 404.
+- Routes: `/`, `/map`, `/planner`, `/share`, `/products`, `/product/:id`, `/list`, `/cart`, `/checkout`, `/status`, `/login`, `/register`, `/profile`, `/500`, 404.
+- Location from the most precise source available (GPS → IP → time zone → manual pick on the map). Nearby stores are real (OpenStreetMap); their products, prices and stock are simulated, and the UI says so.
+- Currency follows the selected country; catalog prices are stored in COP and converted with live rates.
+- Weekly planner: free AI (Pollinations via the `api/ai.js` proxy) with a rule-based fallback; it is not medical or nutrition advice.
+- Multi-device through share links and QR codes (data in the URL fragment), no sync server.
 - The distributed backend is simulated in the browser (`src/distributed/`), never a real server. It must look and behave distributed; it must also say plainly that it is a simulation.
-- Three branch nodes (Chapinero, Usaquén, Kennedy) with per-branch prices and stock; nodes can be set to normal, slow or down from `/status`.
-- Prices in Colombian pesos (COP), VAT included; delivery fee COP 5.900, free from COP 90.000.
+- Nodes are the nearby stores (up to 12; the three Bogotá branches are the demo cluster before they load) with per-store prices and stock; nodes can be set to normal, slow or down from `/status`.
+- Prices stored in Colombian pesos (COP), VAT included, shown in the selected country's currency; delivery fee COP 5.900, free from COP 90.000.
 - Payment is on delivery and only registered; nothing is charged and nothing is delivered. This must stay visible to users.
 - Five languages (Spanish, English, Portuguese, Polish, Italian), detected from browser language and location, with a user-facing picker.
 - Fully responsive and mobile-first: touch targets of at least 44px, safe areas, thumb-reachable navigation.

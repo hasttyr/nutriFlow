@@ -2,11 +2,15 @@
 // Calls travel over a fake network with latency, transient failures and nodes that can go down,
 // so the app can show routing, retries, failover and quorum replication without a real server.
 
-export const NODES = [
+// The three Bogotá branches are the demo cluster, used until real nearby stores load (and in tests).
+export const DEMO_NODES = [
   { id: 'chapinero', code: 'CHA', name: 'Chapinero', zone: { es: 'Bogotá · norte', en: 'Bogotá · north', pt: 'Bogotá · norte', pl: 'Bogota · północ', it: 'Bogotá · nord' }, baseLatency: 38 },
   { id: 'usaquen', code: 'USA', name: 'Usaquén', zone: { es: 'Bogotá · nororiente', en: 'Bogotá · northeast', pt: 'Bogotá · nordeste', pl: 'Bogota · północny wschód', it: 'Bogotá · nord-est' }, baseLatency: 66 },
   { id: 'kennedy', code: 'KEN', name: 'Kennedy', zone: { es: 'Bogotá · suroccidente', en: 'Bogotá · southwest', pt: 'Bogotá · sudoeste', pl: 'Bogota · południowy zachód', it: 'Bogotá · sud-ovest' }, baseLatency: 94 }
 ];
+
+// Live binding: replaced by the nearby stores when they load (see setNodes).
+export let NODES = DEMO_NODES;
 
 export const NODE_STATUSES = ['online', 'slow', 'offline'];
 export const STORAGE_KEY = 'nutriflow/node';
@@ -36,15 +40,15 @@ const loadActiveNode = () => {
   }
 };
 
-const initialNodes = () =>
+const initialNodes = (nodes = NODES) =>
   Object.fromEntries(
-    NODES.map((node) => [
+    nodes.map((node) => [
       node.id,
       { status: 'online', latency: node.baseLatency, requests: 0, failures: 0, version: 1, lastHeartbeat: Date.now() }
     ])
   );
 
-let state = { activeNodeId: loadActiveNode(), nodes: initialNodes(), log: [] };
+let state = { activeNodeId: loadActiveNode(), nodes: initialNodes(), log: [], members: 'demo' };
 let sequence = 0;
 const listeners = new Set();
 
@@ -65,12 +69,34 @@ export const getClusterState = () => state;
 
 export const resetCluster = () => {
   sequence = 0;
-  setState(() => ({ activeNodeId: NODES[0].id, nodes: initialNodes(), log: [] }));
+  NODES = DEMO_NODES;
+  setState(() => ({ activeNodeId: NODES[0].id, nodes: initialNodes(), log: [], members: 'demo' }));
 };
 
-export const getNode = (nodeId) => NODES.find((node) => node.id === nodeId);
+// Old log entries can point at a store that already left the cluster.
+export const getNode = (nodeId) => NODES.find((node) => node.id === nodeId) ?? { id: nodeId, code: '???', name: nodeId ?? '—', zone: {} };
 
-export const isOnline = (nodeId) => state.nodes[nodeId].status !== 'offline';
+// Cluster membership change: the nearby stores join as nodes and the old members leave.
+// The stored branch is kept when it is still a member; otherwise the closest store becomes active.
+export const setNodes = (nodes, members = 'stores') => {
+  if (!nodes.length) return;
+  NODES = nodes;
+  let stored = null;
+  try {
+    stored = window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    stored = null;
+  }
+  const activeNodeId = nodes.some((node) => node.id === stored) ? stored : nodes[0].id;
+  setState((current) => ({
+    activeNodeId,
+    members,
+    nodes: initialNodes(nodes),
+    log: [{ id: ++sequence, time: Date.now(), kind: 'membership', nodeId: activeNodeId, service: 'cluster', op: `join ${nodes.length} nodes`, ms: 0, ok: true }, ...current.log].slice(0, LOG_LIMIT)
+  }));
+};
+
+export const isOnline = (nodeId) => state.nodes[nodeId] !== undefined && state.nodes[nodeId].status !== 'offline';
 
 export const onlineCount = (current = state) => NODES.filter((node) => current.nodes[node.id].status !== 'offline').length;
 
@@ -92,7 +118,7 @@ export const setActiveNode = (nodeId) => {
 export const setNodeStatus = (nodeId, status) => patchNode(nodeId, () => ({ status }));
 
 // A write landed on this node's inventory replica.
-export const markWrite = (nodeId) => patchNode(nodeId, (node) => ({ version: node.version + 1 }));
+export const markWrite = (nodeId) => state.nodes[nodeId] && patchNode(nodeId, (node) => ({ version: node.version + 1 }));
 
 export const record = (entry) =>
   setState((current) => ({ log: [{ id: ++sequence, time: Date.now(), ...entry }, ...current.log].slice(0, LOG_LIMIT) }));
@@ -102,8 +128,10 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms * simulati
 // One request/response hop to a service hosted on a node.
 export const rpc = async (nodeId, service, op, handler) => {
   const node = state.nodes[nodeId];
+  if (!node) throw new NodeUnavailableError(nodeId);
   const ms = Math.round((node.status === 'slow' ? node.latency * SLOW_FACTOR : node.latency) * (0.75 + simulation.random() * 0.5));
   await sleep(ms);
+  if (!state.nodes[nodeId]) throw new NodeUnavailableError(nodeId);
   const ok = isOnline(nodeId) && simulation.random() >= simulation.failureRate;
   patchNode(nodeId, (current) => ({ requests: current.requests + 1, failures: current.failures + (ok ? 0 : 1) }));
   record({ kind: 'rpc', nodeId, service, op, ms, ok });

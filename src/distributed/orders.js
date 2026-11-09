@@ -1,8 +1,11 @@
 import { NODES, NodeUnavailableError, getNode, isOnline, replicasOf, rpcWithRetry } from './cluster';
 import { OutOfStockError, releaseAt, reserveAt } from './inventory';
 
-// The primary plus at least one replica must store the order before it is confirmed.
+// Each order is stored on the primary plus the two closest replicas (replication factor 3);
+// the primary plus at least one replica must store it before it is confirmed.
 export const QUORUM = 2;
+export const REPLICATION = 3;
+export const replicationFactor = () => Math.min(REPLICATION, NODES.length);
 
 export class OrderError extends Error {
   constructor(reason, nodeId) {
@@ -64,7 +67,7 @@ export const placeOrder = async ({ items, fulfillment, nodeId }, onTrace = () =>
     await step('orders', primary, () => rpcWithRetry(primary, 'orders', 'create', () => id));
 
     // 5. Replicate to the other branches in parallel; confirm on quorum.
-    const replicas = NODES.map((node) => node.id).filter((id) => id !== primary);
+    const replicas = replicasOf(primary).slice(0, REPLICATION - 1);
     const results = await Promise.allSettled(
       replicas.map((replica) => step('replication', replica, () => rpcWithRetry(replica, 'orders', `replicate ${id}`, () => id, 1)))
     );
