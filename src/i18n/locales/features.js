@@ -119,6 +119,13 @@ const features = {
     'Korzysta z darmowej AI (Pollinations). Jeśli nie odpowie, plan ułoży planer regułowy. To nie jest porada medyczna ani dietetyczna.',
     'Usa un’IA gratuita (Pollinations). Se non risponde, un pianificatore a regole crea il piano. Non è un consiglio medico o nutrizionale.'
   ),
+  'planner.waiting': L(
+    'La IA gratuita está ocupada; reintentamos en {seconds} s…',
+    'The free AI is busy; retrying in {seconds} s…',
+    'A IA gratuita está ocupada; tentamos de novo em {seconds} s…',
+    'Darmowa AI jest zajęta; ponawiamy za {seconds} s…',
+    'L’IA gratuita è occupata; riproviamo tra {seconds} s…'
+  ),
   'planner.byAi': L('Plan creado por IA', 'Plan created by AI', 'Plano criado por IA', 'Plan utworzony przez AI', 'Piano creato dall’IA'),
   'planner.byRules': L('Plan creado por reglas', 'Rule-based plan', 'Plano criado por regras', 'Plan z reguł', 'Piano creato da regole'),
   'planner.aiFallback': L('La IA no respondió a tiempo; usamos el planificador por reglas.', 'The AI did not answer in time; the rule-based planner took over.', 'A IA não respondeu a tempo; usamos o planejador por regras.', 'AI nie odpowiedziała na czas; użyliśmy planera regułowego.', 'L’IA non ha risposto in tempo; abbiamo usato il pianificatore a regole.'),

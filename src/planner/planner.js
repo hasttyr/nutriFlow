@@ -127,20 +127,41 @@ export const sanitizePlan = (raw, allowedIds, people = 1) => {
   };
 };
 
-export const aiPlan = async ({ text, locale, country, people = 1, signal }) => {
+// Pollinations' free tier answers once every ~45 s per IP (all visitors share the proxy's IP).
+// A 402 says how long to wait; we wait once (up to 50 s) and try again.
+const sleep = (ms, signal) =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener('abort', () => {
+      clearTimeout(timer);
+      reject(signal.reason);
+    }, { once: true });
+  });
+
+export const aiPlan = async ({ text, locale, country, people = 1, signal, onWait = () => {} }) => {
   const diet = detectDiet(text);
   const pool = availableProducts().filter(({ product }) => fits(product, diet));
-  const response = await fetch(AI_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'openai-fast',
-      reasoning_effort: 'low',
-      max_tokens: 4000,
-      messages: [{ role: 'user', content: buildPrompt({ text, locale, country, people, pool }) }]
-    }),
-    signal: AbortSignal.any([signal ?? new AbortController().signal, AbortSignal.timeout(75000)])
+  const body = JSON.stringify({
+    model: 'openai-fast',
+    reasoning_effort: 'low',
+    max_tokens: 4000,
+    messages: [{ role: 'user', content: buildPrompt({ text, locale, country, people, pool }) }]
   });
+  let response;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    response = await fetch(AI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      signal: AbortSignal.any([signal ?? new AbortController().signal, AbortSignal.timeout(75000)])
+    });
+    if (response.status !== 402 && response.status !== 429) break;
+    const seconds = Number((await response.text()).match(/after (\d+)\s*s/i)?.[1] ?? 45);
+    if (attempt > 0 || seconds > 50) break;
+    onWait(seconds + 1);
+    await sleep((seconds + 1) * 1000, signal);
+    onWait(0);
+  }
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
   const content = data?.choices?.[0]?.message?.content ?? '';

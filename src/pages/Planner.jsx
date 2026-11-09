@@ -149,6 +149,7 @@ const Planner = () => {
   const [people, setPeople] = useState(1);
   const [plan, setPlan] = useState(loadPlan);
   const [busy, setBusy] = useState(false);
+  const [wait, setWait] = useState(0);
   const controller = useRef(null);
   const days = weekdays(locale);
 
@@ -159,7 +160,7 @@ const Planner = () => {
     controller.current = new AbortController();
     setBusy(true);
     try {
-      const next = await makePlan({ text, locale, country: region.country, people, localize, signal: controller.current.signal });
+      const next = await makePlan({ text, locale, country: region.country, people, localize, signal: controller.current.signal, onWait: setWait });
       const stamped = { ...next, request: text, people };
       setPlan(stamped);
       savePlan(stamped);
@@ -167,6 +168,7 @@ const Planner = () => {
       // Cancelled by the shopper.
     } finally {
       setBusy(false);
+      setWait(0);
     }
   };
 
@@ -216,6 +218,7 @@ const Planner = () => {
               </button>
             </div>
           </div>
+          {busy && wait > 0 && <p className="mt-3 text-sm font-medium text-amber-800" role="status">{t('planner.waiting', { seconds: wait })}</p>}
           <p className="mt-3 text-xs text-ink/60">{t('planner.disclaimer')}</p>
         </Glass>
 

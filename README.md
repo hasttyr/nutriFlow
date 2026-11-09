@@ -59,7 +59,7 @@ Pushing to `main` deploys on Vercel. `vercel.json` rewrites every route except `
 
 ### AI proxy
 
-Pollinations rejects anonymous calls made from a browser (it asks for a Turnstile token) but answers server-to-server ones, so the planner calls `/api/ai`, a single Vercel Function (`api/ai.js`) that forwards only the chat messages. In development Vite's proxy does the same (`vite.config.js`). No key is needed; if you create one at enter.pollinations.ai, set `POLLINATIONS_KEY` in the Vercel project and the proxy uses it. The free model takes ~15–30 s; when it fails or times out, the rule-based planner answers.
+Pollinations rejects anonymous calls made from a browser (it asks for a Turnstile token) but answers server-to-server ones, so the planner calls `/api/ai`, a single Vercel Function (`api/ai.js`) that forwards only the chat messages. In development Vite's proxy does the same (`vite.config.js`). No key is needed; if you create one at enter.pollinations.ai, set `POLLINATIONS_KEY` in the Vercel project and the proxy uses it. The free model takes ~15–30 s and the anonymous tier allows **one reply every ~45 s per IP**, shared by every visitor because all calls leave from the proxy; the planner waits and retries once, and otherwise the rule-based planner answers. For a smoother demo, create a free key and set `POLLINATIONS_KEY`.
 
 ### External services (all free, no key)
 
