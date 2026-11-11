@@ -423,7 +423,6 @@
   "receipt.payment": "Forma de pagamento",
   "receipt.dataLaw": "Dados pessoais tratados conforme a {law}; armazenados na região {region}.",
   "receipt.demo": "Documento de demonstração: sem validade fiscal.",
-  "nav.console": "Console de {role}",
   "nav.notifications": {
     "one": "Notificações, {count} não lida",
     "other": "Notificações, {count} não lidas"
@@ -598,5 +597,12 @@
   "tag.breakfast": "Bom para o café da manhã",
   "tag.fish": "Peixe ou fruto do mar",
   "tag.glutenFree": "Sem glúten",
-  "tag.local": "Típico de {country}"
+  "tag.local": "Típico de {country}",
+  "nav.orders": "Pedidos",
+  "nav.storeOrders": "Pedidos",
+  "nav.deliveries": "Entregas",
+  "nav.status": "Sistema",
+  "nav.operation": "Operação",
+  "nav.profiles": "Perfis",
+  "nav.monitor": "Monitoramento"
 }

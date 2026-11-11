@@ -423,7 +423,6 @@
   "receipt.payment": "Payment",
   "receipt.dataLaw": "Personal data processed under {law}; stored in the {region} region.",
   "receipt.demo": "Demo document: it has no tax validity.",
-  "nav.console": "{role} console",
   "nav.notifications": {
     "one": "Notifications, {count} unread",
     "other": "Notifications, {count} unread"
@@ -598,5 +597,12 @@
   "tag.breakfast": "Good for breakfast",
   "tag.fish": "Fish or seafood",
   "tag.glutenFree": "Gluten-free",
-  "tag.local": "Typical of {country}"
+  "tag.local": "Typical of {country}",
+  "nav.orders": "Orders",
+  "nav.storeOrders": "Orders",
+  "nav.deliveries": "Deliveries",
+  "nav.status": "System",
+  "nav.operation": "Operations",
+  "nav.profiles": "Profiles",
+  "nav.monitor": "Monitoring"
 }

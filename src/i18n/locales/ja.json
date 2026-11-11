@@ -410,7 +410,6 @@
   "receipt.payment": "お支払い方法",
   "receipt.dataLaw": "個人情報は{law}に基づき取り扱い、{region} リージョンに保存します。",
   "receipt.demo": "デモ用の書類です。税務上の効力はありません。",
-  "nav.console": "{role}のコンソール",
   "nav.notifications": {
     "other": "お知らせ、未読 {count} 件"
   },
@@ -580,5 +579,12 @@
   "tag.breakfast": "朝食向き",
   "tag.fish": "魚介",
   "tag.glutenFree": "グルテンフリー",
-  "tag.local": "{country}の定番"
+  "tag.local": "{country}の定番",
+  "nav.orders": "注文",
+  "nav.storeOrders": "注文",
+  "nav.deliveries": "配達",
+  "nav.status": "システム",
+  "nav.operation": "運用",
+  "nav.profiles": "プロファイル",
+  "nav.monitor": "監視"
 }

@@ -668,11 +668,28 @@ describe('A live order across the four apps', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Platform console' })).toBeInTheDocument();
     expect(screen.getByTestId('fx-source')).toHaveTextContent(/Exchange rates: .+, updated .+\./);
 
-    await user.click(screen.getByRole('button', { name: 'Regional profiles' }));
+    // The admin's own menu replaces the shopping tabs.
+    expect(screen.queryByRole('link', { name: /^Cart/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'Profiles' }));
     const fee = screen.getByLabelText('Delivery fee (COP)');
     await user.clear(fee);
     await user.type(fee, '4900');
     await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(getLive().overrides.CO.delivery.fee).toBe(4900);
+  });
+});
+
+describe('Menus per role', () => {
+  const menu = () => within(screen.getByRole('navigation', { name: 'Main' })).getAllByRole('link').map((link) => link.textContent);
+
+  it('gives each actor the menu of its own app', () => {
+    renderApp('/');
+    expect(menu()).toEqual(['Map', 'Products', 'Planner', 'List', 'Orders', 'Cart']);
+    act(() => signIn({ role: 'merchant' }));
+    expect(menu()).toEqual(['Orders', 'System']);
+    act(() => signIn({ role: 'courier' }));
+    expect(menu()).toEqual(['Deliveries', 'Map']);
+    act(() => signIn({ role: 'admin' }));
+    expect(menu()).toEqual(['Operations', 'Profiles', 'Monitoring', 'System']);
   });
 });

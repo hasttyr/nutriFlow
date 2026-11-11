@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from 'react';
-import { Link } from 'react-router';
-import { Activity, ChevronDown, Gauge, SlidersHorizontal } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router';
+import { ChevronDown } from 'lucide-react';
 import { onlineCount, NODES } from '../distributed/cluster';
 import { useCluster } from '../distributed/hooks';
 import { useLive, updateLive } from '../live/store';
@@ -205,16 +205,11 @@ const Monitor = () => {
   );
 };
 
-const TABS = [
-  ['operation', Gauge],
-  ['profiles', SlidersHorizontal],
-  ['monitor', Activity]
-];
-
 const AdminConsole = () => {
   const { t } = useLocale();
   const live = useLive();
-  const [tab, setTab] = useState('operation');
+  const [params] = useSearchParams();
+  const tab = params.get('tab') ?? 'operation';
   const [rates, setRates] = useState(REFERENCE_RATES);
   useEffect(() => {
     let active = true;
@@ -236,14 +231,6 @@ const AdminConsole = () => {
             </span>
           </label>
         </PageTitle>
-        <div role="group" aria-label={t('admin.title')} className="mb-6 flex flex-wrap gap-2">
-          {TABS.map(([id, Icon]) => (
-            <button key={id} type="button" aria-pressed={tab === id} onClick={() => setTab(id)} className={`${smallButton} aria-pressed:bg-ink! aria-pressed:text-white!`}>
-              <Icon aria-hidden="true" className="size-4" />
-              {t(`admin.tab.${id}`)}
-            </button>
-          ))}
-        </div>
         {tab === 'operation' && <Operation rates={rates} />}
         {tab === 'profiles' && <ProfileEditor />}
         {tab === 'monitor' && <Monitor />}

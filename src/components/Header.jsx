@@ -1,8 +1,11 @@
-import { Link, NavLink } from 'react-router';
-import { Bell, CircleUserRound, LayoutDashboard, Leaf, ListChecks, Map as MapIcon, ShoppingBag, Store, WandSparkles } from 'lucide-react';
+import { Link, NavLink, useLocation } from 'react-router';
+import {
+  Activity, Bell, Bike, CircleUserRound, ClipboardList, Gauge, Leaf, ListChecks, Map as MapIcon, Package, Server, ShoppingBag,
+  SlidersHorizontal, Store, WandSparkles
+} from 'lucide-react';
 import { useLive } from '../live/store';
 import { unreadCount } from '../live/orders';
-import { HOME, useSession } from '../live/session';
+import { useSession } from '../live/session';
 import { useCart } from '../cart/useCart';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
@@ -27,11 +30,41 @@ const tabClass = ({ isActive }) =>
     isActive ? 'bg-white/85 text-ink shadow-glass-sm' : 'text-ink/75 hover:bg-white/45 hover:text-ink'
   ].join(' ');
 
+// Each actor gets the menu of its own app (assignment 6.4: one navigation map per app). The
+// customer's cart is added after these, with its live count. `wideOnly` items hide on phones,
+// where the tab bar has no room; the bell and the account page still reach them there.
+const MENUS = {
+  customer: [
+    { to: '/map', icon: MapIcon, label: 'nav.map' },
+    { to: '/products', icon: Store, label: 'nav.products' },
+    { to: '/planner', icon: WandSparkles, label: 'nav.planner' },
+    { to: '/list', icon: ListChecks, label: 'nav.list' },
+    { to: '/orders', icon: Package, label: 'nav.orders', wideOnly: true }
+  ],
+  merchant: [
+    { to: '/merchant', icon: ClipboardList, label: 'nav.storeOrders' },
+    { to: '/status', icon: Server, label: 'nav.status' }
+  ],
+  courier: [
+    { to: '/courier', icon: Bike, label: 'nav.deliveries' },
+    { to: '/map', icon: MapIcon, label: 'nav.map' }
+  ],
+  admin: [
+    { to: '/admin', tab: 'operation', icon: Gauge, label: 'nav.operation' },
+    { to: '/admin', tab: 'profiles', icon: SlidersHorizontal, label: 'nav.profiles' },
+    { to: '/admin', tab: 'monitor', icon: Activity, label: 'nav.monitor' },
+    { to: '/status', icon: Server, label: 'nav.status' }
+  ]
+};
+
 const Header = () => {
   const { itemCount } = useCart();
   const { t } = useLocale();
   const session = useSession();
   const unread = unreadCount(useLive(), session);
+  const { pathname, search } = useLocation();
+  // Admin tabs share a path, so the current one also compares the ?tab= value.
+  const isCurrent = (item) => pathname === item.to && (!item.tab || (new URLSearchParams(search).get('tab') ?? 'operation') === item.tab);
   const iconLink = ({ isActive }) =>
     `relative flex size-11 items-center justify-center rounded-full ring-1 ring-white/50 ring-inset transition duration-200 ease-out md:size-8 ${focusRing} ${
       isActive ? 'bg-white/85 text-ink shadow-glass-sm' : 'bg-ink/8 text-ink/75 hover:bg-white/55 hover:text-ink'
@@ -50,44 +83,36 @@ const Header = () => {
         </Link>
         <div className="flex items-center gap-1 sm:gap-2">
           <nav aria-label={t('nav.label')} className={navClass}>
-            <NavLink to="/map" className={tabClass}>
-              <MapIcon aria-hidden="true" className="size-5 md:hidden" strokeWidth={1.9} />
-              {t('nav.map')}
-            </NavLink>
-            <NavLink to="/products" className={tabClass}>
-              <Store aria-hidden="true" className="size-5 md:hidden" strokeWidth={1.9} />
-              {t('nav.products')}
-            </NavLink>
-            <NavLink to="/planner" className={tabClass}>
-              <WandSparkles aria-hidden="true" className="size-5 md:hidden" strokeWidth={1.9} />
-              {t('nav.planner')}
-            </NavLink>
-            <NavLink to="/list" className={tabClass}>
-              <ListChecks aria-hidden="true" className="size-5 md:hidden" strokeWidth={1.9} />
-              {t('nav.list')}
-            </NavLink>
-            <NavLink to="/cart" className={tabClass} aria-label={t('nav.cartLabel', { count: itemCount })}>
-              <ShoppingBag aria-hidden="true" className="size-5 md:size-4" strokeWidth={1.9} />
-              {t('nav.cart')}
-              {itemCount > 0 && (
-                // Phones: rides on the icon's top-right. From md up: an inline pill after the label.
-                <span
-                  aria-hidden="true"
-                  data-testid="cart-count"
-                  className="flex h-5 min-w-5 items-center justify-center rounded-full bg-citrus-500 px-1 text-xs font-bold text-white tabular-nums shadow-[0_4px_10px_-3px_rgb(216_90_6/0.7)] ring-2 ring-white/85 max-md:absolute max-md:top-0.5 max-md:left-1/2 max-md:ml-1"
-                >
-                  {itemCount > 99 ? '99+' : itemCount}
-                </span>
-              )}
-            </NavLink>
+            {MENUS[session.role].map((item) => (
+              <Link
+                key={item.label}
+                to={item.tab ? `${item.to}?tab=${item.tab}` : item.to}
+                aria-current={isCurrent(item) ? 'page' : undefined}
+                className={`${tabClass({ isActive: isCurrent(item) })} ${item.wideOnly ? 'max-md:hidden' : ''}`}
+              >
+                <item.icon aria-hidden="true" className="size-5 md:hidden" strokeWidth={1.9} />
+                {t(item.label)}
+              </Link>
+            ))}
+            {session.role === 'customer' && (
+              <NavLink to="/cart" className={tabClass} aria-label={t('nav.cartLabel', { count: itemCount })}>
+                <ShoppingBag aria-hidden="true" className="size-5 md:size-4" strokeWidth={1.9} />
+                {t('nav.cart')}
+                {itemCount > 0 && (
+                  // Phones: rides on the icon's top-right. From md up: an inline pill after the label.
+                  <span
+                    aria-hidden="true"
+                    data-testid="cart-count"
+                    className="flex h-5 min-w-5 items-center justify-center rounded-full bg-citrus-500 px-1 text-xs font-bold text-white tabular-nums shadow-[0_4px_10px_-3px_rgb(216_90_6/0.7)] ring-2 ring-white/85 max-md:absolute max-md:top-0.5 max-md:left-1/2 max-md:ml-1"
+                  >
+                    {itemCount > 99 ? '99+' : itemCount}
+                  </span>
+                )}
+              </NavLink>
+            )}
           </nav>
           <ClusterBadge />
           <LanguagePicker />
-          {session.role !== 'customer' && (
-            <NavLink to={HOME[session.role]} aria-label={t('nav.console', { role: t(`role.${session.role}`) })} className={iconLink}>
-              <LayoutDashboard aria-hidden="true" className="size-5 md:size-4.5" strokeWidth={1.9} />
-            </NavLink>
-          )}
           <NavLink to="/notifications" aria-label={t('nav.notifications', { count: unread })} className={iconLink}>
             <Bell aria-hidden="true" className="size-5 md:size-4.5" strokeWidth={1.9} />
             {unread > 0 && (
