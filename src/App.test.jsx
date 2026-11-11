@@ -53,11 +53,15 @@ const shopIn = (country) => {
   window.localStorage.setItem(LOCALE_KEY, JSON.stringify({ locale: 'en', country }));
 };
 
-const fillDelivery = async (user, phone = '3001234567') => {
-  await user.type(screen.getByLabelText('Full name'), 'Ada Lovelace');
+// Fills the contact details; every address field gets the example its country profile shows.
+const fillDelivery = async (user, phone = '3001234567', name = { given: 'Ada', family: 'Lovelace' }) => {
+  await user.type(screen.getByLabelText('First name'), name.given);
+  await user.type(screen.getByLabelText('Last name'), name.family);
   await user.type(screen.getByLabelText('Mobile'), phone);
-  await user.type(screen.getByLabelText('Address'), 'Calle 45 # 12-30');
-  await user.type(screen.getByLabelText('Neighborhood'), 'Chapinero Alto');
+  const contact = screen.getByRole('group', { name: 'Contact details' });
+  for (const input of within(contact).getAllByRole('textbox')) {
+    if (!input.value && input.placeholder) await user.type(input, input.placeholder);
+  }
 };
 
 describe('Browsing', () => {
@@ -309,8 +313,7 @@ describe('Checkout across the cluster', () => {
     await user.click(screen.getByRole('radio', { name: /Pick up at a branch/ }));
     await user.click(screen.getByRole('radio', { name: /Kennedy/ }));
     expect(within(screen.getByRole('radiogroup', { name: 'Pickup branch' })).getByText('1 product missing')).toBeInTheDocument();
-    await user.type(screen.getByLabelText('Full name'), 'Ada');
-    await user.type(screen.getByLabelText('Mobile'), '3001234567');
+    await fillDelivery(user);
     await user.click(screen.getByRole('button', { name: 'Place Order' }));
     await user.click(screen.getByRole('button', { name: 'Approve' }));
 
@@ -389,6 +392,31 @@ describe('Checkout across the cluster', () => {
     await user.click(screen.getByRole('radio', { name: /Convenience store payment/ }));
     await user.click(screen.getByRole('button', { name: 'Place Order' }));
     expect(await screen.findByTestId('order-voucher')).toHaveTextContent('Awaiting payment with Convenience store payment');
+  });
+
+  it('issues the Japanese receipt with the family name first and the address from prefecture down', async () => {
+    shopIn('JP');
+    seedCart([{ id: 66, quantity: 2 }]);
+    const { user } = renderApp('/checkout');
+    const labels = [...screen.getByRole('group', { name: 'Contact details' }).querySelectorAll('label')].map((label) => label.textContent);
+    expect(labels.slice(0, 2)).toEqual(['Last name', 'First name']);
+    expect(labels.indexOf('Postal code')).toBeLessThan(labels.indexOf('Prefecture'));
+
+    await fillDelivery(user, '090-1234-5678', { given: '花子', family: '山田' });
+    await user.click(screen.getByRole('radio', { name: /PayPay/ }));
+    await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    await user.click(screen.getByRole('button', { name: /paid \(simulate\)/ }));
+
+    const receipt = await screen.findByTestId('receipt');
+    expect(within(receipt).getByRole('heading', { name: '適格請求書' })).toBeInTheDocument();
+    expect(receipt).toHaveTextContent('山田 花子');
+    expect(receipt).toHaveTextContent('〒150-0002, 東京都, 渋谷区, 渋谷2-21-1, ヒカリエ 8F');
+    expect(receipt).toHaveTextContent('Includes 消費税 8%');
+    expect(within(receipt).getByTestId('receipt-total')).toHaveTextContent(/^[¥￥]2,386$/);
+    // Stored in UTC, shown in Tokyo time.
+    const issued = within(receipt).getByTestId('receipt-issued');
+    expect(issued.getAttribute('datetime')).toMatch(/Z$/);
+    expect(issued).toHaveTextContent('(Asia/Tokyo)');
   });
 
   it('takes cash on delivery in Colombia', async () => {

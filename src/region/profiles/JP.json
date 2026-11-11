@@ -9,23 +9,82 @@
   "hour12": false,
   "firstDayOfWeek": 7,
   "measurement": "metric",
-  "pilotCity": { "name": "東京", "lat": 35.6595, "lon": 139.7005 },
-  "phone": { "prefix": "+81", "pattern": "0[789]0-?\\d{4}-?\\d{4}", "example": "090-1234-5678" },
-  "postalCode": { "pattern": "\\d{3}-?\\d{4}", "example": "150-0002" },
+  "pilotCity": {
+    "name": "東京",
+    "lat": 35.6595,
+    "lon": 139.7005
+  },
+  "phone": {
+    "prefix": "+81",
+    "pattern": "0[789]0-?\\d{4}-?\\d{4}",
+    "example": "090-1234-5678"
+  },
+  "postalCode": {
+    "pattern": "\\d{3}-?\\d{4}",
+    "example": "150-0002",
+    "prefix": "〒"
+  },
+  "address": {
+    "fields": [
+      "postalCode",
+      "prefecture",
+      "city",
+      "street",
+      "building"
+    ],
+    "optional": [
+      "building"
+    ],
+    "example": {
+      "prefecture": "東京都",
+      "city": "渋谷区",
+      "street": "渋谷2-21-1",
+      "building": "ヒカリエ 8F"
+    }
+  },
   "nameOrder": "family-given",
-  "pricing": { "step": 10, "offset": -2 },
-  "delivery": { "fee": 330, "freeFrom": 3500 },
+  "pricing": {
+    "step": 10,
+    "offset": -2
+  },
+  "delivery": {
+    "fee": 330,
+    "freeFrom": 3500
+  },
   "tax": {
     "name": "消費税",
     "includedInPrice": true,
     "rateScale": 100000,
-    "rates": { "standard": 10000, "reduced": 8000, "prepared": 8000 }
+    "rates": {
+      "standard": 10000,
+      "reduced": 8000,
+      "prepared": 8000
+    }
   },
-  "tip": { "mode": "none", "suggestedPercents": [], "defaultPercent": 0 },
-  "receipt": { "type": "適格請求書", "authority": "国税庁" },
-  "fiscalId": { "person": null, "business": "法人番号 / 登録番号 (T + 13)" },
-  "payments": ["card", "paypay", "konbini"],
-  "dataProtection": { "law": "個人情報保護法 (APPI)", "authority": "個人情報保護委員会", "residency": "jp" },
+  "tip": {
+    "mode": "none",
+    "suggestedPercents": [],
+    "defaultPercent": 0
+  },
+  "receipt": {
+    "type": "適格請求書",
+    "authority": "国税庁",
+    "merchantId": "登録番号 T1234567890123"
+  },
+  "fiscalId": {
+    "person": null,
+    "business": "法人番号 / 登録番号 (T + 13)"
+  },
+  "payments": [
+    "card",
+    "paypay",
+    "konbini"
+  ],
+  "dataProtection": {
+    "law": "個人情報保護法 (APPI)",
+    "authority": "個人情報保護委員会",
+    "residency": "jp"
+  },
   "sources": [
     "https://cldr.unicode.org (ja_JP)",
     "https://www.nta.go.jp/taxes/shiraberu/zeimokubetsu/shohi/keigenzeiritsu/ (軽減税率)",

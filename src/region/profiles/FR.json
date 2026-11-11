@@ -8,23 +8,79 @@
   "hour12": false,
   "firstDayOfWeek": 1,
   "measurement": "metric",
-  "pilotCity": { "name": "Paris", "lat": 48.8667, "lon": 2.3333 },
-  "phone": { "prefix": "+33", "pattern": "0[67](?:(?: |\\.)?\\d{2}){4}", "example": "06 12 34 56 78" },
-  "postalCode": { "pattern": "\\d{5}", "example": "75002" },
+  "pilotCity": {
+    "name": "Paris",
+    "lat": 48.8667,
+    "lon": 2.3333
+  },
+  "phone": {
+    "prefix": "+33",
+    "pattern": "0[67](?:(?: |\\.)?\\d{2}){4}",
+    "example": "06 12 34 56 78"
+  },
+  "postalCode": {
+    "pattern": "\\d{5}",
+    "example": "75002"
+  },
+  "address": {
+    "fields": [
+      "street",
+      "postalCode",
+      "city"
+    ],
+    "optional": [],
+    "example": {
+      "street": "12 rue de la Paix",
+      "city": "Paris"
+    }
+  },
   "nameOrder": "given-family",
-  "pricing": { "step": 10, "offset": -1 },
-  "delivery": { "fee": 299, "freeFrom": 3000 },
+  "pricing": {
+    "step": 10,
+    "offset": -1
+  },
+  "delivery": {
+    "fee": 299,
+    "freeFrom": 3000
+  },
   "tax": {
     "name": "TVA",
     "includedInPrice": true,
     "rateScale": 100000,
-    "rates": { "standard": 20000, "reduced": 5500, "prepared": 10000 }
+    "rates": {
+      "standard": 20000,
+      "reduced": 5500,
+      "prepared": 10000
+    }
   },
-  "tip": { "mode": "optional", "suggestedPercents": [5, 10], "defaultPercent": 0 },
-  "receipt": { "type": "Facture", "authority": "DGFiP" },
-  "fiscalId": { "person": null, "business": "SIRET" },
-  "payments": ["card", "applepay", "sepa", "paypal"],
-  "dataProtection": { "law": "RGPD (Règlement (UE) 2016/679)", "authority": "CNIL", "residency": "fr" },
+  "tip": {
+    "mode": "optional",
+    "suggestedPercents": [
+      5,
+      10
+    ],
+    "defaultPercent": 0
+  },
+  "receipt": {
+    "type": "Facture",
+    "authority": "DGFiP",
+    "merchantId": "SIRET 123 456 789 00012"
+  },
+  "fiscalId": {
+    "person": null,
+    "business": "SIRET"
+  },
+  "payments": [
+    "card",
+    "applepay",
+    "sepa",
+    "paypal"
+  ],
+  "dataProtection": {
+    "law": "RGPD (Règlement (UE) 2016/679)",
+    "authority": "CNIL",
+    "residency": "fr"
+  },
   "sources": [
     "https://cldr.unicode.org (fr_FR)",
     "https://www.impots.gouv.fr/professionnel/questions/quels-sont-les-taux-de-tva-en-vigueur-en-france-et-dans-lunion-europeenne",

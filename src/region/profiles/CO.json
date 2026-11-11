@@ -9,24 +9,85 @@
   "hour12": true,
   "firstDayOfWeek": 7,
   "measurement": "metric",
-  "pilotCity": { "name": "Bogotá", "lat": 4.6486, "lon": -74.0628 },
-  "phone": { "prefix": "+57", "pattern": "3\\d{2}(?: |-)?\\d{3}(?: |-)?\\d{4}", "example": "300 123 4567" },
-  "postalCode": { "pattern": "\\d{6}", "example": "110231" },
+  "pilotCity": {
+    "name": "Bogotá",
+    "lat": 4.6486,
+    "lon": -74.0628
+  },
+  "phone": {
+    "prefix": "+57",
+    "pattern": "3\\d{2}(?: |-)?\\d{3}(?: |-)?\\d{4}",
+    "example": "300 123 4567"
+  },
+  "postalCode": {
+    "pattern": "\\d{6}",
+    "example": "110231"
+  },
+  "address": {
+    "fields": [
+      "street",
+      "neighborhood",
+      "city",
+      "postalCode"
+    ],
+    "optional": [
+      "postalCode"
+    ],
+    "example": {
+      "street": "Calle 72 # 10-34",
+      "neighborhood": "Chapinero",
+      "city": "Bogotá"
+    }
+  },
   "nameOrder": "given-family",
-  "pricing": { "step": 100, "offset": 0 },
-  "delivery": { "fee": 5900, "freeFrom": 90000 },
+  "pricing": {
+    "step": 100,
+    "offset": 0
+  },
+  "delivery": {
+    "fee": 5900,
+    "freeFrom": 90000
+  },
   "tax": {
     "name": "IVA",
     "includedInPrice": true,
     "rateScale": 100000,
-    "rates": { "standard": 19000, "reduced": 5000, "prepared": 8000 },
+    "rates": {
+      "standard": 19000,
+      "reduced": 5000,
+      "prepared": 8000
+    },
     "preparedName": "Impuesto Nacional al Consumo"
   },
-  "tip": { "mode": "optional", "suggestedPercents": [5, 10], "defaultPercent": 0 },
-  "receipt": { "type": "Factura electrónica de venta", "authority": "DIAN" },
-  "fiscalId": { "person": "CC", "business": "NIT" },
-  "payments": ["nequi", "pse", "card", "daviplata", "cash"],
-  "dataProtection": { "law": "Ley 1581 de 2012", "authority": "SIC", "residency": "co" },
+  "tip": {
+    "mode": "optional",
+    "suggestedPercents": [
+      5,
+      10
+    ],
+    "defaultPercent": 0
+  },
+  "receipt": {
+    "type": "Factura electrónica de venta",
+    "authority": "DIAN",
+    "merchantId": "NIT 901.234.567-8"
+  },
+  "fiscalId": {
+    "person": "CC",
+    "business": "NIT"
+  },
+  "payments": [
+    "nequi",
+    "pse",
+    "card",
+    "daviplata",
+    "cash"
+  ],
+  "dataProtection": {
+    "law": "Ley 1581 de 2012",
+    "authority": "SIC",
+    "residency": "co"
+  },
   "sources": [
     "https://cldr.unicode.org (es_CO)",
     "https://www.dian.gov.co (IVA, impuesto al consumo, factura electrónica)",

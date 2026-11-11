@@ -7,6 +7,7 @@ import { missingAt, priceAt } from '../distributed/inventory';
 import { QUORUM, placeOrder, replicationFactor } from '../distributed/orders';
 import { useCluster } from '../distributed/hooks';
 import { useLocale } from '../i18n/useLocale';
+import Receipt from '../components/Receipt';
 import TraceList from '../components/TraceList';
 import Glass from '../ui/Glass';
 import StatusDot from '../ui/StatusDot';
@@ -16,6 +17,7 @@ import GlassSelect from '../ui/GlassSelect';
 import { useRegion } from '../geo/region';
 import { countryName } from '../region/profiles';
 import { quote, toMajor } from '../region/money';
+import { nameFields } from '../region/address';
 import BrandMark from '../payments/BrandMark';
 import CountryPicker from '../components/CountryPicker';
 import PaymentStep from '../payments/PaymentStep';
@@ -23,7 +25,12 @@ import {
   cardBrand, digitsOf, expiryValid, formatCardNumber, formatExpiry, luhnValid, methodName, methodsFor, paymentCode
 } from '../payments/methods';
 
-const initialForm = { name: '', phone: '', address: '', neighborhood: '', notes: '' };
+const initialForm = {};
+const autoComplete = {
+  givenName: 'given-name', familyName: 'family-name', street: 'address-line1', apartment: 'address-line2', building: 'address-line2',
+  complement: 'address-line2', neighborhood: 'address-level3', city: 'address-level2', state: 'address-level1', prefecture: 'address-level1',
+  postalCode: 'postal-code'
+};
 const initialCard = { number: '', name: '', expiry: '', cvc: '' };
 
 const selectTrigger = 'relative flex min-h-11 w-full items-center rounded-2xl border border-white/80 bg-white/60 py-2.5 pr-10 pl-4 text-ink shadow-[inset_0_1px_3px_rgb(19_32_26/0.1)] transition hover:bg-white/75 aria-expanded:bg-white/85';
@@ -80,11 +87,12 @@ const Checkout = () => {
   const place = countryName(locale, region.country);
   const brand = cardBrand(card.number);
 
-  const fieldProps = (id) => ({
+  const fieldProps = (id, label = `checkout.${id}`) => ({
     id,
-    value: form[id],
+    value: form[id] ?? '',
     onChange: (event) => setForm((current) => ({ ...current, [id]: event.target.value })),
-    label: t(`checkout.${id}`)
+    label: t(label),
+    autoComplete: autoComplete[id]
   });
 
   const setCardField = (id, value) => {
@@ -99,7 +107,9 @@ const Checkout = () => {
       const order = await placeOrder({ items: orderItems, fulfillment, nodeId: pricingNodeId }, setTrace);
       // The total is recomputed at the branch that actually took the order (it may have failed over).
       const orderLines = items.map((item) => ({ ...item, price: priceAt(order.nodeId, item) }));
-      setOutcome({ order, payment, requestedNodeId: pricingNodeId, total: quote(orderLines, { fulfillment, tipPercent }, profile).total });
+      const orderTotals = quote(orderLines, { fulfillment, tipPercent }, profile);
+      // The issue time is stored in UTC (ISO 8601) and shown in the country's time zone.
+      setOutcome({ order, payment, requestedNodeId: pricingNodeId, lines: orderLines, totals: orderTotals, total: orderTotals.total, customer: form, issuedAt: new Date().toISOString() });
       clearCart();
       setPhase('done');
     } catch (error) {
@@ -203,6 +213,7 @@ const Checkout = () => {
               <Barcode code={payment.code} />
             </div>
           )}
+          <Receipt order={order} customer={outcome.customer} lines={outcome.lines} totals={outcome.totals} payment={payment} fulfillment={fulfillment} issuedAt={outcome.issuedAt} />
           <h2 className="mb-3 text-lg font-semibold text-ink">{t('order.trace')}</h2>
           <TraceList trace={order.trace} />
           <div className="mt-8 text-center">
@@ -307,7 +318,9 @@ const Checkout = () => {
             <Glass as="fieldset" tone="solid" className="rounded-3xl p-5 sm:p-6">
               <legend className={`${sectionHeading} float-left mb-4 w-full`}>{t('checkout.contact')}</legend>
               <div className="clear-both grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field {...fieldProps('name')} type="text" autoComplete="name" required />
+                {nameFields(profile).map((id) => (
+                  <Field key={id} {...fieldProps(id)} type="text" required />
+                ))}
                 <Field
                   {...fieldProps('phone')}
                   type="tel"
@@ -320,9 +333,14 @@ const Checkout = () => {
                 />
                 {fulfillment === 'delivery' && (
                   <>
-                    <Field {...fieldProps('address')} type="text" autoComplete="street-address" className="sm:col-span-2" required />
-                    <Field {...fieldProps('neighborhood')} type="text" autoComplete="address-level3" required />
-                    <Field {...fieldProps('notes')} type="text" />
+                    {profile.address.fields.map((id) =>
+                      id === 'postalCode' ? (
+                        <Field key={id} {...fieldProps(id, 'address.postalCode')} type="text" pattern={profile.postalCode.pattern} placeholder={profile.postalCode.example} required={!profile.address.optional.includes(id)} />
+                      ) : (
+                        <Field key={id} {...fieldProps(id, `address.${id}`)} type="text" placeholder={profile.address.example[id]} required={!profile.address.optional.includes(id)} />
+                      )
+                    )}
+                    <Field {...fieldProps('notes')} type="text" className="sm:col-span-2" />
                   </>
                 )}
               </div>
