@@ -20,6 +20,22 @@ nutriFlow helps you do your groceries ("hacer mercado") wherever you are: it fin
 - **Control views**: a 404 page for unknown routes and a 500 page at `/500`, which also replaces any screen that crashes while rendering.
 - **Five languages** (Spanish, Portuguese, English, French, Japanese), one JSON resource catalog per language in `src/i18n/locales/` with stable keys and English fallback. The language follows the country; a language picked by hand is remembered for that country. Numbers, money, dates and times always follow the country's profile. Japanese uses CJK fonts and strict line breaking. Liquid-glass UI built 100% with Tailwind, mobile-first.
 
+## The four apps, live
+
+The platform serves four actors, each with its own app. Sign in at `/login` and pick the role; every browser tab keeps its own session, so the four apps can run side by side:
+
+| Route | Actor | What it does |
+| --- | --- | --- |
+| `/checkout` → `/orders/:id` | Customer | Order, then follow it live: map with store, courier and door; timeline in local time; cancel with refund; rate store and courier; the country's receipt |
+| `/merchant` | Store | Incoming orders by stage: accept or reject, mark ready, hand over pickups |
+| `/courier` | Courier | Go online/offline, pick up and deliver; the fleet with each courier's load |
+| `/admin` | Admin | Sales per country consolidated in USD (exchange rates with source and date), platform revenue, regional profiles editable as data (tax rates, delivery fee, tip, commission), monitoring and an autopilot |
+| `/notifications` | Everyone | Each actor's inbox, in their language and time zone |
+
+**How the tabs talk:** the shared state (`src/live/store.js`) lives in `localStorage`, every tab hears the others' writes through the `storage` event, and writes are serialised across tabs with the Web Locks API (a real mutex between processes). Couriers are assigned by proximity and availability with load balancing (`pickCourier`: distance × (1 + deliveries in progress), at most 2 at a time). The autopilot runs only in the tab that holds the leader lock; when that tab closes, the next one in line takes over (leader election with failover).
+
+Demo: open `/orders/<id>` in one tab, `/merchant` and `/courier` in two others, and watch the order move; or turn on the autopilot in `/admin`.
+
 ## Simulated distributed system
 
 Everything lives in `src/distributed/`:

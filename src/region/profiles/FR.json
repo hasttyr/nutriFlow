@@ -85,5 +85,15 @@
     "https://cldr.unicode.org (fr_FR)",
     "https://www.impots.gouv.fr/professionnel/questions/quels-sont-les-taux-de-tva-en-vigueur-en-france-et-dans-lunion-europeenne",
     "https://www.cnil.fr/fr/reglement-europeen-protection-donnees"
+  ],
+  "revenue": {
+    "commission": 17000
+  },
+  "couriers": [
+    "Lucas Martin",
+    "Chloé Bernard",
+    "Hugo Petit",
+    "Léa Dubois",
+    "Nathan Moreau"
   ]
 }

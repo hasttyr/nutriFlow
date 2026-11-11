@@ -1,17 +1,23 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { RolePicker } from '../components/LiveUi';
+import { HOME, signIn } from '../live/session';
 import { useLocale } from '../i18n/useLocale';
 import AuthLayout from '../components/AuthLayout';
 import { Field, Notice, PasswordField } from '../ui/Field';
 import { primaryButton, textLink } from '../ui/classes';
 
-// Demo screen: any email and password "log in" and open the demo profile.
+// Demo sign-in: any email and password open the app of the chosen role (customer, store,
+// courier or admin) in this tab.
 const Login = () => {
   const { t } = useLocale();
   const navigate = useNavigate();
+  const [role, setRole] = useState('customer');
 
   const submit = (event) => {
     event.preventDefault();
-    navigate('/profile');
+    signIn({ role, name: t(`role.${role}`) });
+    navigate(HOME[role]);
   };
 
   return (
@@ -25,6 +31,7 @@ const Login = () => {
       }
     >
       <form onSubmit={submit} className="mt-6 grid gap-4">
+        <RolePicker value={role} onChange={setRole} />
         <Field id="email" label={t('auth.email')} type="email" autoComplete="email" placeholder="laura.gomez@example.com" required />
         <PasswordField id="password" label={t('auth.password')} toggleLabel={t('auth.showPassword')} autoComplete="current-password" required />
         <div className="flex flex-wrap items-center justify-between gap-x-4 text-sm">

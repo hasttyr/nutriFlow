@@ -3,9 +3,12 @@ import { LocaleContext } from './LocaleContext';
 import { createTranslator, loadLocaleChoice, localeFor, saveLocaleChoice } from './i18n';
 import { activeProfile, useRegion } from '../geo/region';
 import { DEFAULT_COUNTRY, profileFor } from '../region/profiles';
+import { useLive } from '../live/store';
 
 const LocaleProvider = ({ children }) => {
   const region = useRegion();
+  // Re-render when the admin console overrides a profile.
+  useLive();
   const [choice, setChoice] = useState(loadLocaleChoice);
   const locale = localeFor(region.country, choice);
   // Outside the served countries nothing is priced, so formats fall back to the default profile.

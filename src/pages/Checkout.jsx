@@ -11,13 +11,14 @@ import Receipt from '../components/Receipt';
 import TraceList from '../components/TraceList';
 import Glass from '../ui/Glass';
 import StatusDot from '../ui/StatusDot';
-import { fieldInput, fieldLabel, pageHeading, primaryButton, sectionHeading } from '../ui/classes';
+import { fieldInput, fieldLabel, glassButton, pageHeading, primaryButton, sectionHeading } from '../ui/classes';
 import { Field, Notice } from '../ui/Field';
 import GlassSelect from '../ui/GlassSelect';
 import { useRegion } from '../geo/region';
 import { countryName } from '../region/profiles';
 import { quote, toMajor } from '../region/money';
 import { nameFields } from '../region/address';
+import { createOrder } from '../live/orders';
 import BrandMark from '../payments/BrandMark';
 import CountryPicker from '../components/CountryPicker';
 import PaymentStep from '../payments/PaymentStep';
@@ -109,7 +110,10 @@ const Checkout = () => {
       const orderLines = items.map((item) => ({ ...item, price: priceAt(order.nodeId, item) }));
       const orderTotals = quote(orderLines, { fulfillment, tipPercent }, profile);
       // The issue time is stored in UTC (ISO 8601) and shown in the country's time zone.
-      setOutcome({ order, payment, requestedNodeId: pricingNodeId, lines: orderLines, totals: orderTotals, total: orderTotals.total, customer: form, issuedAt: new Date().toISOString() });
+      const issuedAt = new Date().toISOString();
+      setOutcome({ order, payment, requestedNodeId: pricingNodeId, lines: orderLines, totals: orderTotals, total: orderTotals.total, customer: form, issuedAt });
+      // The confirmed order goes live: the store, a courier and the admin see it from now on.
+      await createOrder({ id: order.id, country: profile.country, nodeId: order.nodeId, customer: form, lines: orderLines, totals: orderTotals, payment, fulfillment });
       clearCart();
       setPhase('done');
     } catch (error) {
@@ -216,8 +220,9 @@ const Checkout = () => {
           <Receipt order={order} customer={outcome.customer} lines={outcome.lines} totals={outcome.totals} payment={payment} fulfillment={fulfillment} issuedAt={outcome.issuedAt} />
           <h2 className="mb-3 text-lg font-semibold text-ink">{t('order.trace')}</h2>
           <TraceList trace={order.trace} />
-          <div className="mt-8 text-center">
-            <Link to="/products" className={primaryButton}>{t('common.continueShopping')}</Link>
+          <div className="mt-8 flex flex-wrap justify-center gap-2">
+            <Link to={`/orders/${order.id}`} className={primaryButton}>{t('orders.track')}</Link>
+            <Link to="/products" className={glassButton}>{t('common.continueShopping')}</Link>
           </div>
         </Glass>
       </div>

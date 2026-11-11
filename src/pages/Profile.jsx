@@ -1,11 +1,13 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { Link } from 'react-router';
-import { Briefcase, ChevronDown, House, LogOut, Pencil, Plus, RotateCcw } from 'lucide-react';
+import { Briefcase, ChevronDown, House, LogOut, Pencil, Plus, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react';
 import profile from '../data/profile';
 import { NODES, getNode, onlineCount, setActiveNode } from '../distributed/cluster';
 import { useCluster } from '../distributed/hooks';
 import { LOCALES, LOCALE_NAMES } from '../i18n/i18n';
-import { listPrice } from '../region/profiles';
+import { countryName, listPrice } from '../region/profiles';
+import { resetLive } from '../live/store';
+import { signOut, useSession } from '../live/session';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
 import GlassSelect from '../ui/GlassSelect';
@@ -67,6 +69,16 @@ const Profile = () => {
   // Demo figure: what the store discounts saved on the delivered orders, about 6 %.
   const saved = Math.round(orders.filter((order) => order.status !== 'cancelled').reduce((sum, order) => sum + order.total, 0) * 0.06);
   const cluster = useCluster();
+  const session = useSession();
+  const [erased, setErased] = useState(false);
+  const [confirmErase, setConfirmErase] = useState(false);
+  // Right to erasure (habeas data, LGPD, GDPR, APPI…): orders, notifications, cart and list go.
+  const erase = () => {
+    resetLive();
+    ['nutriflow/cart', 'nutriflow/list', 'nutriflow/plan', 'nutriflow/location'].forEach((key) => window.localStorage.removeItem(key));
+    setErased(true);
+    setConfirmErase(false);
+  };
   const languageLabel = useId();
   const branchLabel = useId();
   const online = onlineCount(cluster);
@@ -102,13 +114,48 @@ const Profile = () => {
               </div>
             </dl>
 
-            <Link to="/login" className={`${glassButton} mt-6 w-full`}>
+            <Link to="/login" onClick={signOut} className={`${glassButton} mt-6 w-full`}>
               <LogOut aria-hidden="true" className="size-4" />
               {t('profile.logout')}
             </Link>
           </Glass>
 
           <div className="grid gap-6">
+            <Section title={t('profile.region')}>
+              <dl className="grid gap-4 sm:grid-cols-2">
+                {[
+                  [t('auth.role'), t(`role.${session.role}`)],
+                  [t('region.country'), `${countryName(locale, region.country)} · ${region.currency}`],
+                  [t('language.label'), LOCALE_NAMES[locale]],
+                  [t('profile.timeZone'), region.timeZone]
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <dt className="text-sm text-ink/65">{label}</dt>
+                    <dd className="font-medium text-ink">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="mt-4 flex items-start gap-2 text-sm text-ink/75">
+                <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-leaf-700" />
+                {t('profile.residency', { law: region.dataProtection.law, region: region.dataProtection.residency })}
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <Link to="/orders" className={smallButton}>{t('orders.title')}</Link>
+                {confirmErase ? (
+                  <>
+                    <span className="text-sm text-ink/80">{t('profile.eraseConfirm')}</span>
+                    <button type="button" onClick={erase} className={`${smallButton} text-rose-700`}>{t('profile.eraseYes')}</button>
+                    <button type="button" onClick={() => setConfirmErase(false)} className={smallButton}>{t('orders.keep')}</button>
+                  </>
+                ) : (
+                  <button type="button" onClick={() => setConfirmErase(true)} className={`${smallButton} text-rose-700`}>
+                    <Trash2 aria-hidden="true" className="size-4" />
+                    {t('profile.erase')}
+                  </button>
+                )}
+              </div>
+              {erased && <p role="status" className="mt-3 text-sm text-leaf-700">{t('profile.erased')}</p>}
+            </Section>
             <Section
               title={t('profile.personal')}
               action={

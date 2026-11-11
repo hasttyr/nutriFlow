@@ -15,7 +15,18 @@ export class OrderError extends Error {
   }
 }
 
-let orderSequence = 0;
+// Order numbers survive reloads (orders now live on), so the counter is kept with them.
+const SEQUENCE_KEY = 'nutriflow/order-sequence';
+const nextOrderNumber = () => {
+  let next = 1;
+  try {
+    next = (Number(window.localStorage.getItem(SEQUENCE_KEY)) || 0) + 1;
+    window.localStorage.setItem(SEQUENCE_KEY, String(next));
+  } catch {
+    // Storage can be unavailable; numbers then restart with the page.
+  }
+  return next;
+};
 
 // Order saga: route → reserve stock → register payment → create order → replicate → notify.
 // Every step reports progress through onTrace so the UI can draw the request crossing the cluster.
@@ -62,8 +73,7 @@ export const placeOrder = async ({ items, fulfillment, nodeId }, onTrace = () =>
     await step('payments', primary, () => rpcWithRetry(primary, 'payments', 'register', () => 'cash-on-delivery'));
 
     // 4. The primary creates the order with a branch-prefixed id.
-    orderSequence += 1;
-    const id = `NF-${getNode(primary).code}-${String(1040 + orderSequence).padStart(5, '0')}`;
+    const id = `NF-${getNode(primary).code}-${String(1040 + nextOrderNumber()).padStart(5, '0')}`;
     await step('orders', primary, () => rpcWithRetry(primary, 'orders', 'create', () => id));
 
     // 5. Replicate to the other branches in parallel; confirm on quorum.

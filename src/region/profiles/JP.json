@@ -89,5 +89,15 @@
     "https://cldr.unicode.org (ja_JP)",
     "https://www.nta.go.jp/taxes/shiraberu/zeimokubetsu/shohi/keigenzeiritsu/ (軽減税率)",
     "https://www.ppc.go.jp (APPI)"
+  ],
+  "revenue": {
+    "commission": 14000
+  },
+  "couriers": [
+    "佐藤 健",
+    "鈴木 美咲",
+    "高橋 翔",
+    "田中 優子",
+    "伊藤 大輔"
   ]
 }

@@ -21,6 +21,12 @@ import { isSupported } from './region/profiles';
 const StoreMap = lazy(() => import('./pages/StoreMap'));
 const Planner = lazy(() => import('./pages/Planner'));
 const SharedImport = lazy(() => import('./pages/SharedImport'));
+const Orders = lazy(() => import('./pages/Orders'));
+const OrderTracking = lazy(() => import('./pages/OrderTracking'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const Merchant = lazy(() => import('./pages/Merchant'));
+const Courier = lazy(() => import('./pages/Courier'));
+const Admin = lazy(() => import('./pages/Admin'));
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -59,6 +65,12 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/orders/:id" element={<OrderTracking />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/merchant" element={<Merchant />} />
+            <Route path="/courier" element={<Courier />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="/500" element={<ServerError />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

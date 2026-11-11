@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import App from './App';
@@ -12,6 +12,8 @@ import { STORAGE_KEY as LIST_KEY } from './list/list';
 import { STORAGE_KEY as LOCALE_KEY } from './i18n/i18n';
 import { setNodeStatus } from './distributed/cluster';
 import { applyLocation, setCountry } from './geo/region';
+import { getLive } from './live/store';
+import { signIn } from './live/session';
 
 // Most tests read the interface in English while shopping in Colombia (COP prices, Colombian
 // payment methods): a language picked by hand in that country.
@@ -207,6 +209,8 @@ describe('Account', () => {
     await user.type(screen.getByLabelText('Password'), 'secret123');
     await user.type(screen.getByLabelText('Confirm password'), 'secret123');
     await user.click(screen.getByLabelText('I accept the terms and privacy policy'));
+    // Consent names the data-protection law of the chosen country.
+    await user.click(screen.getByLabelText('I consent to the processing of my personal data under Ley 1581 de 2012.'));
     await user.click(screen.getByRole('button', { name: 'Create account' }));
     expect(screen.getByRole('heading', { level: 1, name: 'My profile' })).toBeInTheDocument();
   });
@@ -592,5 +596,83 @@ describe('Branch picker', () => {
     await user.click(screen.getByRole('option', { name: /^Usaquén/ }));
     expect(screen.getByRole('combobox', { name: 'Branch' })).toHaveTextContent(/^Usaquén · Online/);
     expect(await screen.findByTestId('data-source')).toHaveTextContent(/Usaquén inventory/);
+  });
+});
+
+describe('A live order across the four apps', () => {
+  it('is placed by the customer, prepared by the store, delivered by a courier and rated', async () => {
+    seedCart([{ id: 66, quantity: 2 }]);
+    let { user } = renderApp('/checkout');
+    await fillDelivery(user);
+    await user.click(screen.getByRole('radio', { name: /Cash/ }));
+    await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    await screen.findByRole('heading', { name: 'Order confirmed!' });
+    const [order] = getLive().orders;
+    expect(order).toMatchObject({ status: 'placed', country: 'CO', nodeId: 'chapinero' });
+    await user.click(screen.getByRole('link', { name: 'Follow my order' }));
+    expect(await screen.findByRole('heading', { level: 1, name: `Order ${order.id}` })).toBeInTheDocument();
+    cleanup();
+
+    // The store, in its own tab and session.
+    act(() => signIn({ role: 'merchant', storeId: 'chapinero' }));
+    ({ user } = renderApp('/merchant'));
+    const card = await screen.findByTestId(`merchant-order-${order.id}`);
+    expect(card).toHaveTextContent('2 × Lunch of the day');
+    await user.click(within(card).getByRole('button', { name: 'Accept' }));
+    await user.click(within(screen.getByTestId(`merchant-order-${order.id}`)).getByRole('button', { name: 'Mark ready' }));
+    const { courierId } = getLive().orders[0];
+    expect(getLive().orders[0].status).toBe('assigned');
+    cleanup();
+
+    // The assigned courier rides it to the door.
+    act(() => signIn({ role: 'courier', courierId }));
+    ({ user } = renderApp('/courier'));
+    const job = await screen.findByTestId(`job-${order.id}`);
+    await user.click(within(job).getByRole('button', { name: 'Picked up' }));
+    await user.click(within(screen.getByTestId(`job-${order.id}`)).getByRole('button', { name: 'Delivered' }));
+    expect(getLive().orders[0].status).toBe('delivered');
+    cleanup();
+
+    // Back to the customer: notifications, then the rating.
+    act(() => signIn({ role: 'customer' }));
+    ({ user } = renderApp(`/orders/${order.id}`));
+    expect(await screen.findByRole('link', { name: /^Notifications, \d+ unread$/ })).toBeInTheDocument();
+    for (const radio of screen.getAllByRole('radio', { name: '5 stars' })) await user.click(radio);
+    await user.click(screen.getByRole('button', { name: 'Send rating' }));
+    expect(await screen.findByRole('heading', { name: 'Thanks for rating!' })).toBeInTheDocument();
+    expect(getLive().orders[0].rating).toMatchObject({ store: 5, courier: 5 });
+
+    await user.click(screen.getByRole('link', { name: /^Notifications/ }));
+    expect(await screen.findByTestId('inbox')).toHaveTextContent('Order ' + order.id + ' delivered. Enjoy!');
+  });
+
+  it('lets the customer cancel and get the card payment back', async () => {
+    seedCart([{ id: 1, quantity: 1 }]);
+    const { user } = renderApp('/checkout');
+    await fillDelivery(user);
+    await user.click(screen.getByRole('radio', { name: /Credit or debit card/ }));
+    await user.type(screen.getByLabelText('Card number'), '4242424242424242');
+    await user.type(screen.getByLabelText('Name on card'), 'Ada Lovelace');
+    await user.type(screen.getByLabelText('Expiry (MM/YY)'), '1299');
+    await user.type(screen.getByLabelText('CVC'), '123');
+    await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    await user.click(await screen.findByRole('link', { name: 'Follow my order' }));
+    await user.click(await screen.findByRole('button', { name: 'Cancel order' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, cancel' }));
+    expect(await screen.findByTestId('refund-line')).toHaveTextContent(`We refunded ${cop(9700)} to your payment method (simulated).`);
+  });
+
+  it('opens a console only for its role, and the admin edits a profile as data', async () => {
+    const { user } = renderApp('/admin');
+    await user.click(await screen.findByRole('button', { name: 'Enter as Admin (demo)' }));
+    expect(screen.getByRole('heading', { level: 1, name: 'Platform console' })).toBeInTheDocument();
+    expect(screen.getByTestId('fx-source')).toHaveTextContent(/Exchange rates: .+, updated .+\./);
+
+    await user.click(screen.getByRole('button', { name: 'Regional profiles' }));
+    const fee = screen.getByLabelText('Delivery fee (COP)');
+    await user.clear(fee);
+    await user.type(fee, '4900');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(getLive().overrides.CO.delivery.fee).toBe(4900);
   });
 });

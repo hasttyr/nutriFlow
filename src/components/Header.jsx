@@ -1,5 +1,8 @@
 import { Link, NavLink } from 'react-router';
-import { CircleUserRound, Leaf, ListChecks, Map as MapIcon, ShoppingBag, Store, WandSparkles } from 'lucide-react';
+import { Bell, CircleUserRound, LayoutDashboard, Leaf, ListChecks, Map as MapIcon, ShoppingBag, Store, WandSparkles } from 'lucide-react';
+import { useLive } from '../live/store';
+import { unreadCount } from '../live/orders';
+import { HOME, useSession } from '../live/session';
 import { useCart } from '../cart/useCart';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
@@ -27,6 +30,12 @@ const tabClass = ({ isActive }) =>
 const Header = () => {
   const { itemCount } = useCart();
   const { t } = useLocale();
+  const session = useSession();
+  const unread = unreadCount(useLive(), session);
+  const iconLink = ({ isActive }) =>
+    `relative flex size-11 items-center justify-center rounded-full ring-1 ring-white/50 ring-inset transition duration-200 ease-out md:size-8 ${focusRing} ${
+      isActive ? 'bg-white/85 text-ink shadow-glass-sm' : 'bg-ink/8 text-ink/75 hover:bg-white/55 hover:text-ink'
+    }`;
 
   return (
     <header className="sticky top-[max(0.75rem,env(safe-area-inset-top))] z-50 px-3 sm:px-4">
@@ -36,7 +45,8 @@ const Header = () => {
           <span className="flex size-8 items-center justify-center rounded-full bg-citrus-500 text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.45)]">
             <Leaf aria-hidden="true" className="size-4.5" strokeWidth={2.25} />
           </span>
-          nutriFlow
+          {/* Phones keep the leaf only: the header also holds the node badge, language, bell and account. */}
+          <span className="max-sm:sr-only">nutriFlow</span>
         </Link>
         <div className="flex items-center gap-1 sm:gap-2">
           <nav aria-label={t('nav.label')} className={navClass}>
@@ -73,6 +83,19 @@ const Header = () => {
           </nav>
           <ClusterBadge />
           <LanguagePicker />
+          {session.role !== 'customer' && (
+            <NavLink to={HOME[session.role]} aria-label={t('nav.console', { role: t(`role.${session.role}`) })} className={iconLink}>
+              <LayoutDashboard aria-hidden="true" className="size-5 md:size-4.5" strokeWidth={1.9} />
+            </NavLink>
+          )}
+          <NavLink to="/notifications" aria-label={t('nav.notifications', { count: unread })} className={iconLink}>
+            <Bell aria-hidden="true" className="size-5 md:size-4.5" strokeWidth={1.9} />
+            {unread > 0 && (
+              <span aria-hidden="true" data-testid="unread-count" className="absolute -top-1 -right-1 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-rose-600 px-1 text-[0.65rem] font-bold text-white tabular-nums ring-2 ring-white/85">
+                {unread > 9 ? '9+' : unread}
+              </span>
+            )}
+          </NavLink>
           <NavLink
             to="/profile"
             aria-label={t('nav.account')}

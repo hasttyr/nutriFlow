@@ -94,5 +94,15 @@
     "https://cldr.unicode.org (en_US)",
     "https://www.tax.ny.gov/pubs_and_bulls/tg_bulletins/st/quick_reference_guide_for_taxable_and_exempt_property_and_services.htm",
     "https://ag.ny.gov/resources/organizations/data-breach-reporting/shield-act"
+  ],
+  "revenue": {
+    "commission": 18000
+  },
+  "couriers": [
+    "Mike Johnson",
+    "Sarah Lee",
+    "Carlos Diaz",
+    "Emily Brown",
+    "Kevin Smith"
   ]
 }

@@ -9,6 +9,7 @@ import { useCart } from '../cart/useCart';
 import { useList } from '../list/useList';
 import { MAX_QUANTITY, MIN_QUANTITY } from '../cart/cart';
 import { useLocale } from '../i18n/useLocale';
+import { countryName } from '../region/profiles';
 import BranchBar from '../components/BranchBar';
 import Glass from '../ui/Glass';
 import ProductIcon from '../ui/ProductIcon';
@@ -105,7 +106,7 @@ const ProductDetail = () => {
   const { addItem } = useCart();
   const list = useList();
   const { activeNodeId } = useCluster();
-  const { t, localize, formatPrice } = useLocale();
+  const { t, locale, localize, formatPrice, profile } = useLocale();
   const [quantity, setQuantity] = useState(MIN_QUANTITY);
   const product = getProductById(Number(id));
 
@@ -151,6 +152,13 @@ const ProductDetail = () => {
             <div>
               <h1 className={`${pageHeading} mb-1`}>{name}</h1>
               <p className="text-ink/70">{localize(product.unit)} · {t(`category.${product.category}`)}</p>
+              <p className="mt-2 text-ink/80" data-testid="product-description">
+                {[
+                  ...product.tags.filter((tag) => tag !== 'gluten').map((tag) => t(`tag.${tag}`)),
+                  ...(product.tags.includes('gluten') ? [] : [t('tag.glutenFree')]),
+                  ...(product.local.includes(profile.country) ? [t('tag.local', { country: countryName(locale, profile.country) })] : [])
+                ].join(' · ')}
+              </p>
             </div>
 
             <div className="flex items-center gap-3">

@@ -98,5 +98,15 @@
     "https://portal.fazenda.sp.gov.br (ICMS SP, NFC-e)",
     "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2012/lei/l12741.htm",
     "https://www.gov.br/anpd (LGPD)"
+  ],
+  "revenue": {
+    "commission": 15000
+  },
+  "couriers": [
+    "João Silva",
+    "Ana Souza",
+    "Pedro Lima",
+    "Beatriz Alves",
+    "Rafael Costa"
   ]
 }

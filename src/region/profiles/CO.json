@@ -92,5 +92,15 @@
     "https://cldr.unicode.org (es_CO)",
     "https://www.dian.gov.co (IVA, impuesto al consumo, factura electrónica)",
     "https://www.sic.gov.co (Ley 1581 de 2012)"
+  ],
+  "revenue": {
+    "commission": 15000
+  },
+  "couriers": [
+    "Andrés Rojas",
+    "Luisa Martínez",
+    "Jhon Pérez",
+    "Camila Ortiz",
+    "Diego Ríos"
   ]
 }
