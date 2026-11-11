@@ -1,5 +1,8 @@
 import products from '../data/products';
+import { activeProfile } from '../geo/region';
 import { seeded } from '../geo/stores';
+import { roundPrice } from '../region/money';
+import { listPrice } from '../region/profiles';
 import { NODES, getNode, markWrite, readWithFailover, rpcWithRetry } from './cluster';
 
 // Each branch prices and stocks the catalog on its own. The demo branches use fixed seeds (tests
@@ -62,7 +65,12 @@ export class OutOfStockError extends Error {
 
 const priceFactor = (nodeId) => DEMO_PRICE_FACTOR[nodeId] ?? 0.9 + seeded(`${nodeId}#price`)() * 0.25;
 
-export const priceAt = (nodeId, product) => Math.round((product.basePrice * priceFactor(nodeId)) / 100) * 100;
+// The country's list price (minor units) with the store's own factor, rounded to local price endings.
+export const priceAt = (nodeId, product) => {
+  const profile = activeProfile();
+  if (!profile) return 0;
+  return roundPrice(listPrice(profile.country, product.id) * priceFactor(nodeId), profile.pricing);
+};
 
 export const stockAt = (nodeId, productId) => stockOf(nodeId)[productId] ?? 0;
 

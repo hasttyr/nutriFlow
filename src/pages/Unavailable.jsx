@@ -1,5 +1,5 @@
 import { ChevronDown, Globe2, MapPinOff } from 'lucide-react';
-import { COUNTRIES, countryName } from '../geo/currency';
+import { COUNTRIES, countryName } from '../region/profiles';
 import { setCountry } from '../geo/region';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';

@@ -5,6 +5,7 @@ import { useRegion } from '../geo/region';
 import { NODES } from '../distributed/cluster';
 import { useCluster } from '../distributed/hooks';
 import { useLocale } from '../i18n/useLocale';
+import { listPrice } from '../region/profiles';
 import Glass from '../ui/Glass';
 import ProductIcon from '../ui/ProductIcon';
 import StatusDot from '../ui/StatusDot';
@@ -17,7 +18,7 @@ const features = [
 ];
 
 const HomePage = () => {
-  const { t, localize, formatPrice } = useLocale();
+  const { t, localize, formatPrice, profile } = useLocale();
   const cluster = useCluster();
   const region = useRegion();
   const local = products.filter((product) => isLocalTo(product, region.country)).slice(0, 8);
@@ -84,7 +85,7 @@ const HomePage = () => {
                       <ProductIcon product={product} size="sm" />
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-semibold text-ink">{localize(product.name)}</span>
-                        <span className="block text-xs text-ink/65 tabular-nums">{t('home.from', { price: formatPrice(product.basePrice) })}</span>
+                        <span className="block text-xs text-ink/65 tabular-nums">{t('home.from', { price: formatPrice(listPrice(profile.country, product.id)) })}</span>
                       </span>
                     </Link>
                   </li>

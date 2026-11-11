@@ -1,23 +1,30 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LocaleContext } from './LocaleContext';
-import { createTranslator, loadLocale, saveLocale } from './i18n';
-import { moneyOf, useRegion } from '../geo/region';
+import { createTranslator, loadLocaleChoice, localeFor, saveLocaleChoice } from './i18n';
+import { activeProfile, useRegion } from '../geo/region';
+import { DEFAULT_COUNTRY, profileFor } from '../region/profiles';
 
 const LocaleProvider = ({ children }) => {
-  const [locale, setCurrentLocale] = useState(loadLocale);
-  const { currency, rate } = moneyOf(useRegion());
+  const region = useRegion();
+  const [choice, setChoice] = useState(loadLocaleChoice);
+  const locale = localeFor(region.country, choice);
+  // Outside the served countries nothing is priced, so formats fall back to the default profile.
+  const profile = activeProfile(region) ?? profileFor(DEFAULT_COUNTRY);
 
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
 
-  // Remembers only what the visitor picks; a detected language is worked out again next visit.
-  const setLocale = useCallback((next) => {
-    saveLocale(next);
-    setCurrentLocale(next);
-  }, []);
+  const setLocale = useCallback(
+    (next) => {
+      const nextChoice = { locale: next, country: region.country };
+      saveLocaleChoice(next, region.country);
+      setChoice(nextChoice);
+    },
+    [region.country]
+  );
 
-  const value = useMemo(() => ({ ...createTranslator(locale, { currency, rate }), setLocale }), [locale, currency, rate, setLocale]);
+  const value = useMemo(() => ({ ...createTranslator(locale, profile), setLocale }), [locale, profile, setLocale]);
 
   return <LocaleContext value={value}>{children}</LocaleContext>;
 };

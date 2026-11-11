@@ -62,84 +62,6 @@ const marks = {
       <Word fill="#1d1d1b" size={8} weight={700} y={34}>BOLETO</Word>
     </Tile>
   ),
-  oxxo: () => (
-    <Tile bg="#e30613">
-      <rect x="4" y="5" width="56" height="4" rx="1" fill="#ffd100" />
-      <rect x="4" y="31" width="56" height="4" rx="1" fill="#ffd100" />
-      <Word size={14} y={25}>OXXO</Word>
-    </Tile>
-  ),
-  spei: () => (
-    <Tile bg="#1d3a6b">
-      <Word size={14} spacing={1}>SPEI</Word>
-    </Tile>
-  ),
-  mercadopago: () => (
-    <Tile bg="#00b1ea">
-      <ellipse cx="32" cy="16" rx="13" ry="8" fill="#fff" />
-      <path d="M24 16 q4 -4 8 0 q4 4 8 0" fill="none" stroke="#00b1ea" strokeWidth="2" strokeLinecap="round" />
-      <Word size={7.5} weight={700} y={33}>mercado pago</Word>
-    </Tile>
-  ),
-  webpay: () => (
-    <Tile bg="#fff">
-      <Word fill="#d5006d" size={13} y={24}>webpay</Word>
-      <rect x="14" y="28" width="36" height="2.5" rx="1.25" fill="#6b1e7b" />
-    </Tile>
-  ),
-  yape: () => (
-    <Tile bg="#742284">
-      <Word fill="#fff" size={15} italic>yape</Word>
-    </Tile>
-  ),
-  plin: () => (
-    <Tile bg="#00c7d4">
-      <Word size={15}>plin</Word>
-    </Tile>
-  ),
-  bizum: () => (
-    <Tile bg="#05c3dd">
-      <Word size={14}>bizum</Word>
-    </Tile>
-  ),
-  mbway: () => (
-    <Tile bg="#d60510">
-      <Word size={9.5} y={18}>MB</Word>
-      <Word size={9.5} y={30} spacing={1}>WAY</Word>
-    </Tile>
-  ),
-  multibanco: () => (
-    <Tile bg="#1a5fa5">
-      <Word size={16} y={27}>MB</Word>
-    </Tile>
-  ),
-  blik: () => (
-    <Tile bg="#000">
-      <Word size={15}>blik</Word>
-      <circle cx="49" cy="12" r="3" fill="#e5004f" />
-    </Tile>
-  ),
-  p24: () => (
-    <Tile bg="#fff">
-      <Word fill="#d13239" size={9} weight={800} y={24}>Przelewy24</Word>
-    </Tile>
-  ),
-  satispay: () => (
-    <Tile bg="#ef4136">
-      <Word size={11}>satispay</Word>
-    </Tile>
-  ),
-  bancomatpay: () => (
-    <Tile bg="#004c97">
-      <Word size={8.5} y={18}>BANCOMAT</Word>
-      <Word fill="#7fd1ff" size={10} y={30}>Pay</Word>
-    </Tile>
-  ),
-  postepay: () => (
-    <Tile bg="#ffde00">
-      <Word fill="#0047bb" size={11}>postepay</Word>
-    </Tile>
-  ),
   paypal: () => (
     <Tile bg="#fff">
       <Word fill="#003087" size={13} italic y={25}>
@@ -147,32 +69,40 @@ const marks = {
       </Word>
     </Tile>
   ),
-  venmo: () => (
-    <Tile bg="#008cff">
-      <Word size={14} italic>venmo</Word>
+  applepay: () => (
+    <Tile bg="#000">
+      <Word size={10} weight={600}>Apple Pay</Word>
     </Tile>
   ),
-  cashapp: () => (
-    <Tile bg="#00d632">
-      <rect x="20" y="8" width="24" height="24" rx="6" fill="#fff" />
-      <Word fill="#00d632" size={17} y={26.5}>$</Word>
+  googlepay: () => (
+    <Tile bg="#fff" border="rgb(0 0 0 / 0.18)">
+      <Word fill="#3c4043" size={11} weight={600}>G Pay</Word>
     </Tile>
   ),
-  paybybank: () => (
-    <Tile bg="#0f2a44">
-      <path d="M32 7 l12 6 h-24 z" fill="#fff" />
-      {[23, 29, 35, 41].map((x) => <rect key={x} x={x - 1.5} y="14" width="3" height="9" fill="#fff" />)}
-      <Word size={7.5} weight={700} y={33}>Pay by Bank</Word>
+  ach: () => (
+    <Tile bg="#0b3d91">
+      <Word size={13}>ACH</Word>
     </Tile>
   ),
-  interac: () => (
-    <Tile bg="#fdb913">
-      <Word fill="#1d1d1b" size={12} weight={800}>Interac</Word>
+  sepa: () => (
+    <Tile bg="#10298e">
+      <Word fill="#ffcc00" size={12.5} italic>SEPA</Word>
     </Tile>
   ),
-  payu: () => (
-    <Tile bg="#a6c307">
-      <Word size={15}>PayU</Word>
+  paypay: () => (
+    <Tile bg="#ff0033">
+      <Word size={11}>PayPay</Word>
+    </Tile>
+  ),
+  konbini: () => (
+    <Tile bg="#00873c">
+      <Word size={11} weight={700}>コンビニ</Word>
+    </Tile>
+  ),
+  cash: () => (
+    <Tile bg="#2f7d4f">
+      <rect x="14" y="12" width="36" height="16" rx="3" fill="none" stroke="#fff" strokeWidth="2" />
+      <circle cx="32" cy="20" r="4" fill="none" stroke="#fff" strokeWidth="2" />
     </Tile>
   ),
   visa: () => (

@@ -6,7 +6,7 @@ import { primaryButton, textLink } from '../ui/classes';
 
 // Demo screen: the form validates like a real one, then opens the demo profile.
 const Register = () => {
-  const { t } = useLocale();
+  const { t, profile } = useLocale();
   const navigate = useNavigate();
 
   const submit = (event) => {
@@ -30,12 +30,12 @@ const Register = () => {
         <Field
           id="phone"
           label={t('checkout.phone')}
-          hint={t('checkout.phoneHint')}
+          hint={t('checkout.phoneHint', { example: profile.phone.example })}
           type="tel"
-          inputMode="numeric"
+          inputMode="tel"
           autoComplete="tel-national"
-          pattern="[0-9]{10}"
-          placeholder="3001234567"
+          pattern={profile.phone.pattern}
+          placeholder={profile.phone.example}
           required
         />
         <PasswordField

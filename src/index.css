@@ -2,6 +2,11 @@
 
 /* Design tokens only: every style in the app is a Tailwind utility built from these. */
 @theme {
+  /* System fonts first; the CJK families make Japanese render with real Japanese glyphs (not
+     Chinese fallbacks) on Apple, Windows, Android and Linux. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic UI", "Yu Gothic", Meiryo, "Noto Sans JP", "Noto Sans CJK JP", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+
   --color-ink: #13201a;
 
   --color-citrus-50: #fff5ec;
@@ -35,4 +40,13 @@
   --shadow-glass-sm: inset 0 1px 0 0 rgb(255 255 255 / 0.9), inset 0 -1px 0 0 rgb(255 255 255 / 0.35),
     0 0 0 1px rgb(19 32 26 / 0.05), 0 6px 14px -6px rgb(19 32 26 / 0.3);
   --shadow-ink: inset 0 1px 0 0 rgb(255 255 255 / 0.22), 0 12px 26px -12px rgb(19 32 26 / 0.65);
+}
+
+/* Japanese has no spaces between words: break lines at phrase boundaries where supported, and
+   follow the strict kinsoku rules (no small kana or closing brackets at the start of a line). */
+@layer base {
+  :lang(ja) {
+    line-break: strict;
+    word-break: auto-phrase;
+  }
 }

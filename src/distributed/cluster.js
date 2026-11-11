@@ -4,9 +4,9 @@
 
 // The three Bogotá branches are the demo cluster, used until real nearby stores load (and in tests).
 export const DEMO_NODES = [
-  { id: 'chapinero', code: 'CHA', name: 'Chapinero', zone: { es: 'Bogotá · norte', en: 'Bogotá · north', pt: 'Bogotá · norte', pl: 'Bogota · północ', it: 'Bogotá · nord' }, baseLatency: 38 },
-  { id: 'usaquen', code: 'USA', name: 'Usaquén', zone: { es: 'Bogotá · nororiente', en: 'Bogotá · northeast', pt: 'Bogotá · nordeste', pl: 'Bogota · północny wschód', it: 'Bogotá · nord-est' }, baseLatency: 66 },
-  { id: 'kennedy', code: 'KEN', name: 'Kennedy', zone: { es: 'Bogotá · suroccidente', en: 'Bogotá · southwest', pt: 'Bogotá · sudoeste', pl: 'Bogota · południowy zachód', it: 'Bogotá · sud-ovest' }, baseLatency: 94 }
+  { id: 'chapinero', code: 'CHA', name: 'Chapinero', zone: { es: 'Bogotá · norte', en: 'Bogotá · north', pt: 'Bogotá · norte', fr: 'Bogota · nord', ja: 'ボゴタ · 北部' }, baseLatency: 38 },
+  { id: 'usaquen', code: 'USA', name: 'Usaquén', zone: { es: 'Bogotá · nororiente', en: 'Bogotá · northeast', pt: 'Bogotá · nordeste', fr: 'Bogota · nord-est', ja: 'ボゴタ · 北東部' }, baseLatency: 66 },
+  { id: 'kennedy', code: 'KEN', name: 'Kennedy', zone: { es: 'Bogotá · suroccidente', en: 'Bogotá · southwest', pt: 'Bogotá · sudoeste', fr: 'Bogota · sud-ouest', ja: 'ボゴタ · 南西部' }, baseLatency: 94 }
 ];
 
 // Live binding: replaced by the nearby stores when they load (see setNodes).

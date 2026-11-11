@@ -5,6 +5,7 @@ import profile from '../data/profile';
 import { NODES, getNode, onlineCount, setActiveNode } from '../distributed/cluster';
 import { useCluster } from '../distributed/hooks';
 import { LOCALES, LOCALE_NAMES } from '../i18n/i18n';
+import { listPrice } from '../region/profiles';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
 import GlassSelect from '../ui/GlassSelect';
@@ -57,7 +58,14 @@ const Switch = ({ label, defaultChecked }) => (
 );
 
 const Profile = () => {
-  const { t, locale, setLocale, formatDate, formatPrice } = useLocale();
+  const { t, locale, setLocale, formatDate, formatPrice, profile: region } = useLocale();
+  const orders = profile.orders.map((order) => ({
+    ...order,
+    items: order.basket.reduce((count, [, quantity]) => count + quantity, 0),
+    total: order.basket.reduce((sum, [id, quantity]) => sum + listPrice(region.country, id) * quantity, 0)
+  }));
+  // Demo figure: what the store discounts saved on the delivered orders, about 6 %.
+  const saved = Math.round(orders.filter((order) => order.status !== 'cancelled').reduce((sum, order) => sum + order.total, 0) * 0.06);
   const cluster = useCluster();
   const languageLabel = useId();
   const branchLabel = useId();
@@ -90,7 +98,7 @@ const Profile = () => {
               </div>
               <div className={`${inset} px-3 py-3`}>
                 <dt className="text-xs text-ink/65">{t('profile.stats.saved')}</dt>
-                <dd className="text-lg font-semibold text-ink tabular-nums">{formatPrice(profile.stats.saved)}</dd>
+                <dd className="text-lg font-semibold text-ink tabular-nums">{formatPrice(saved)}</dd>
               </div>
             </dl>
 
@@ -127,7 +135,7 @@ const Profile = () => {
 
             <Section title={t('profile.orders')}>
               <ul className="grid gap-3">
-                {profile.orders.map((order) => (
+                {orders.map((order) => (
                   <li key={order.id} className={`${inset} flex flex-wrap items-center gap-x-4 gap-y-3 p-4`}>
                     <div className="min-w-0 flex-1 basis-52">
                       <p className="font-mono text-sm font-semibold text-ink">{order.id}</p>

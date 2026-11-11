@@ -6,18 +6,18 @@ import { distanceMeters } from './location';
 export const MAX_STORES = 12;
 
 const KINDS = {
-  supermarket: { categories: null, label: ['Supermercado', 'Supermarket', 'Supermercado', 'Supermarket', 'Supermercato'] },
-  convenience: { categories: ['produce', 'dairy', 'bakery', 'pantry', 'drinks'], label: ['Tienda de barrio', 'Corner shop', 'Mercearia', 'Sklep osiedlowy', 'Minimarket'] },
-  greengrocer: { categories: ['produce'], label: ['Fruver / verdulería', 'Greengrocer', 'Hortifruti', 'Warzywniak', 'Fruttivendolo'] },
-  butcher: { categories: ['meat'], label: ['Carnicería', 'Butcher', 'Açougue', 'Sklep mięsny', 'Macelleria'] },
-  bakery: { categories: ['bakery', 'dairy', 'drinks'], label: ['Panadería', 'Bakery', 'Padaria', 'Piekarnia', 'Panetteria'] },
-  marketplace: { categories: ['produce', 'meat', 'pantry'], label: ['Plaza de mercado', 'Market hall', 'Feira / mercado', 'Targowisko', 'Mercato'] },
-  deli: { categories: ['meat', 'dairy', 'bakery'], label: ['Charcutería', 'Deli', 'Delicatessen', 'Delikatesy', 'Salumeria'] },
-  seafood: { categories: ['meat'], label: ['Pescadería', 'Fishmonger', 'Peixaria', 'Sklep rybny', 'Pescheria'] }
+  supermarket: { categories: null, label: ['Supermercado', 'Supermarket', 'Supermercado', 'Supermarché', 'スーパー'] },
+  convenience: { categories: ['produce', 'dairy', 'bakery', 'pantry', 'drinks'], label: ['Tienda de barrio', 'Corner shop', 'Mercearia', 'Épicerie de quartier', 'コンビニ'] },
+  greengrocer: { categories: ['produce'], label: ['Fruver / verdulería', 'Greengrocer', 'Hortifruti', 'Primeur', '八百屋'] },
+  butcher: { categories: ['meat'], label: ['Carnicería', 'Butcher', 'Açougue', 'Boucherie', '精肉店'] },
+  bakery: { categories: ['bakery', 'dairy', 'drinks'], label: ['Panadería', 'Bakery', 'Padaria', 'Boulangerie', 'パン屋'] },
+  marketplace: { categories: ['produce', 'meat', 'pantry'], label: ['Plaza de mercado', 'Market hall', 'Feira / mercado', 'Marché', '市場'] },
+  deli: { categories: ['meat', 'dairy', 'bakery'], label: ['Charcutería', 'Deli', 'Delicatessen', 'Charcuterie', '惣菜店'] },
+  seafood: { categories: ['meat'], label: ['Pescadería', 'Fishmonger', 'Peixaria', 'Poissonnerie', '鮮魚店'] }
 };
 const ALIASES = { grocery: 'convenience', general: 'convenience', farm: 'greengrocer', dairy: 'deli', department_store: 'supermarket' };
 
-const LOCALES = ['es', 'en', 'pt', 'pl', 'it'];
+const LOCALES = ['es', 'en', 'pt', 'fr', 'ja'];
 const record = (values) => Object.fromEntries(LOCALES.map((locale, index) => [locale, values[index]]));
 
 export const kindOf = (tags = {}) => {

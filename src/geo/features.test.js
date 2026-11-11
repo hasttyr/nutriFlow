@@ -6,7 +6,8 @@ import { placeOrder } from '../distributed/orders';
 import { createTranslator } from '../i18n/i18n';
 import { detectDiet, extractJson, priceBasket, rulePlan, sanitizePlan } from '../planner/planner';
 import { decodeShare, encodeShare } from '../share/share';
-import { currencyFor } from './currency';
+import { methodsFor } from '../payments/methods';
+import { COUNTRIES, PROFILES, listPrice, profileFor } from '../region/profiles';
 import { distanceMeters } from './location';
 import { applyLocation, getRegion, setCountry, toNode } from './region';
 import { findStores, kindOf, syntheticStores } from './stores';
@@ -85,13 +86,66 @@ describe('nearby stores as cluster nodes', () => {
   });
 });
 
-describe('currency', () => {
-  it('maps countries to currencies and converts COP prices', () => {
-    expect(currencyFor('PL')).toBe('PLN');
-    expect(currencyFor('BR')).toBe('BRL');
-    expect(currencyFor('ZZ')).toBe('USD');
-    expect(createTranslator('en', { currency: 'USD', rate: 0.00025 }).formatPrice(20000)).toBe('$5.00');
-    expect(createTranslator('es', { currency: 'CLP', rate: 0.24 }).formatPrice(10000)).toMatch(/2\.400/);
+// Spaces in Intl output (no-break, narrow no-break) as plain spaces, for readable expectations.
+const plain = (text) => text.replace(/[\u00a0\u202f]/g, ' ');
+const formatsOf = (country) => createTranslator(profileFor(country).language, profileFor(country));
+
+describe('RegionProfile', () => {
+  it('serves exactly the five countries of the assignment, each with every attribute', () => {
+    expect(COUNTRIES.sort()).toEqual(['BR', 'CO', 'FR', 'JP', 'US']);
+    const fields = ['language', 'locale', 'currency', 'minorUnits', 'timeZone', 'hour12', 'firstDayOfWeek', 'measurement', 'phone', 'postalCode', 'nameOrder', 'pricing', 'delivery', 'tax', 'tip', 'receipt', 'fiscalId', 'payments', 'dataProtection'];
+    for (const [country, profile] of Object.entries(PROFILES)) {
+      for (const field of fields) expect(profile[field], `${country}.${field}`).toBeDefined();
+      expect(profile.country).toBe(country);
+    }
+  });
+
+  it('prices every product in each country as an integer of the minor unit', () => {
+    for (const country of COUNTRIES) {
+      for (const product of products) {
+        const price = listPrice(country, product.id);
+        expect(Number.isInteger(price) && price > 0, `${country} #${product.id}`).toBe(true);
+      }
+      expect(Number.isInteger(profileFor(country).delivery.fee)).toBe(true);
+    }
+  });
+
+  it('formats money as in section 3.1: symbol, separators and decimals per country', () => {
+    expect(plain(formatsOf('CO').formatPrice(25900))).toBe('$ 25.900');
+    expect(plain(formatsOf('BR').formatPrice(2590))).toBe('R$ 25,90');
+    expect(plain(formatsOf('US').formatPrice(2590))).toBe('$25.90');
+    expect(plain(formatsOf('FR').formatPrice(2590))).toBe('25,90 €');
+    expect(plain(formatsOf('JP').formatPrice(2590))).toMatch(/^[¥￥]2,590$/);
+    // Thousands in France use the narrow no-break space (U+202F).
+    expect(formatsOf('FR').formatPrice(259000)).toBe('2\u202f590,00\u00a0€');
+  });
+
+  it('shows the same instant in each country’s date format, clock and time zone', () => {
+    const instant = Date.UTC(2026, 10, 16, 1, 30); // 20:30 in Bogotá on 15 November
+    expect(formatsOf('CO').formatDate(instant)).toBe('15/11/2026');
+    expect(formatsOf('US').formatDate(instant)).toBe('11/15/2026');
+    expect(formatsOf('JP').formatDate(instant)).toBe('2026/11/16');
+    expect(plain(formatsOf('CO').formatTime(instant))).toMatch(/^08:30:00 p\. ?m\.$/);
+    expect(formatsOf('FR').formatTime(instant)).toBe('02:30:00');
+    expect(plain(formatsOf('US').formatTime(instant))).toBe('08:30:00 PM');
+  });
+
+  it('offers each country its own payment methods, in the profile order', () => {
+    const ids = (country) => methodsFor(profileFor(country)).map((method) => method.id);
+    expect(ids('CO')).toEqual(['nequi', 'pse', 'card', 'daviplata', 'cash']);
+    expect(ids('BR')).toEqual(['pix', 'card', 'boleto', 'cash']);
+    expect(ids('US')).toEqual(['card', 'applepay', 'googlepay', 'ach', 'paypal']);
+    expect(ids('FR')).toEqual(['card', 'applepay', 'sepa', 'paypal']);
+    expect(ids('JP')).toEqual(['card', 'paypay', 'konbini']);
+  });
+
+  it('prices the same store in each country’s currency with local price endings', () => {
+    const banana = getProductById(1);
+    const prices = Object.fromEntries(COUNTRIES.map((country) => {
+      setCountry(country);
+      return [country, priceAt('chapinero', banana)];
+    }));
+    expect(prices).toEqual({ CO: 3800, BR: 509, US: 149, FR: 109, JP: 168 });
   });
 });
 
@@ -102,12 +156,12 @@ describe('country follows the device', () => {
     applyLocation(at('CO', 4.6), { force: true });
     expect(getRegion().country).toBe('CO');
 
-    setCountry('IT');
+    setCountry('FR');
     applyLocation(at('CO', 4.7), { force: true });
-    expect(getRegion().country).toBe('IT');
+    expect(getRegion().country).toBe('FR');
 
-    applyLocation(at('pl', 52.2), { force: true });
-    expect(getRegion()).toMatchObject({ country: 'PL', countryPinned: false });
+    applyLocation(at('br', -23.5), { force: true });
+    expect(getRegion()).toMatchObject({ country: 'BR', countryPinned: false });
     expect(window.localStorage.getItem('nutriflow/country')).toBeNull();
 
     applyLocation(at('JP', 35.6), { force: true });
@@ -118,7 +172,8 @@ describe('country follows the device', () => {
 describe('weekly planner', () => {
   it('detects diets in several languages', () => {
     expect(detectDiet('Quiero comer vegano y barato')).toMatchObject({ vegan: true, vegetarian: true, cheap: true });
-    expect(detectDiet('bez glutenu, dużo białka')).toMatchObject({ glutenFree: true, protein: true });
+    expect(detectDiet('sans gluten, riche en protéines')).toMatchObject({ glutenFree: true, protein: true });
+    expect(detectDiet('ベジタリアンで安い食事')).toMatchObject({ vegetarian: true, cheap: true });
   });
 
   it('builds a 7-day rule-based plan with only products sold nearby', () => {
@@ -178,7 +233,6 @@ describe('catalog', () => {
   it('tags every product and gives local products to several countries', () => {
     expect(products.length).toBe(65);
     expect(products.every((product) => Array.isArray(product.tags) && Array.isArray(product.local))).toBe(true);
-    expect(products.some((product) => product.local.includes('PL'))).toBe(true);
-    expect(products.some((product) => product.local.includes('IT'))).toBe(true);
+    for (const country of COUNTRIES) expect(products.some((product) => product.local.includes(country)), country).toBe(true);
   });
 });

@@ -42,7 +42,7 @@ const CardStep = ({ payment, onDone }) => {
   );
 };
 
-// Wallet apps and BLIK: a push notification on the shopper's phone to approve or reject.
+// Wallet apps (Nequi, Apple Pay…): a push notification on the shopper's phone to approve or reject.
 const PhoneStep = ({ method, payment, amount, onDone }) => {
   const { t } = useLocale();
   const [waiting, setWaiting] = useState(false);
@@ -51,7 +51,7 @@ const PhoneStep = ({ method, payment, amount, onDone }) => {
     await simulatedWait(700);
     onDone({ approved });
   };
-  const target = method.kind === 'code' ? t('payment.blikTarget', { code: payment.blikCode }) : t('payment.phoneTarget', { phone: payment.phone });
+  const target = t('payment.phoneTarget', { phone: payment.phone });
 
   return (
     <>
@@ -81,7 +81,7 @@ const PhoneStep = ({ method, payment, amount, onDone }) => {
   );
 };
 
-// Bank redirect (PSE, Przelewy24, Webpay): a stand-in for the bank's secure page.
+// Bank redirect (PSE, ACH, SEPA, PayPal): a stand-in for the bank's secure page.
 const BankStep = ({ method, payment, amount, onDone }) => {
   const { t } = useLocale();
   const [waiting, setWaiting] = useState(false);
@@ -116,7 +116,7 @@ const BankStep = ({ method, payment, amount, onDone }) => {
   );
 };
 
-// Instant transfer: Pix / Mercado Pago QR with copy-paste code, or SPEI's CLABE.
+// Instant payment: Pix or PayPay QR with a copy-paste code.
 const InstantStep = ({ method, payment, amount, onDone }) => {
   const { t } = useLocale();
   const [qr, setQr] = useState(null);
@@ -124,7 +124,6 @@ const InstantStep = ({ method, payment, amount, onDone }) => {
   const [waiting, setWaiting] = useState(false);
 
   useEffect(() => {
-    if (!method.qr) return undefined;
     let live = true;
     QRCode.toDataURL(payment.code, { margin: 1, width: 260, errorCorrectionLevel: 'M' })
       .then((image) => live && setQr(image))
@@ -132,11 +131,11 @@ const InstantStep = ({ method, payment, amount, onDone }) => {
     return () => {
       live = false;
     };
-  }, [method.qr, payment.code]);
+  }, [payment.code]);
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(method.qr ? payment.code : payment.code.replace(/ /g, ''));
+      await navigator.clipboard.writeText(payment.code);
       setCopied(true);
     } catch {
       setCopied(false);
@@ -154,13 +153,11 @@ const InstantStep = ({ method, payment, amount, onDone }) => {
         <BrandMark id={method.id} />
         <span className="text-2xl font-semibold text-ink tabular-nums">{amount}</span>
       </div>
-      <p className="mb-4 text-center text-ink/75">{t(method.qr ? 'payment.qrText' : 'payment.transferText', { method: method.name })}</p>
-      {method.qr && (
-        <div className="mx-auto mb-4 flex size-56 items-center justify-center rounded-2xl bg-white p-2 ring-1 ring-ink/10">
-          {qr ? <img src={qr} alt={t('payment.qrAlt', { method: method.name })} className="size-full" /> : <LoaderCircle aria-hidden="true" className="size-6 animate-spin text-ink/50" />}
-        </div>
-      )}
-      <p className="mb-1 text-sm font-medium text-ink/70">{t(method.qr ? 'payment.copyPaste' : 'payment.clabe')}</p>
+      <p className="mb-4 text-center text-ink/75">{t('payment.qrText', { method: method.name })}</p>
+      <div className="mx-auto mb-4 flex size-56 items-center justify-center rounded-2xl bg-white p-2 ring-1 ring-ink/10">
+        {qr ? <img src={qr} alt={t('payment.qrAlt', { method: method.name })} className="size-full" /> : <LoaderCircle aria-hidden="true" className="size-6 animate-spin text-ink/50" />}
+      </div>
+      <p className="mb-1 text-sm font-medium text-ink/70">{t('payment.copyPaste')}</p>
       <div className="mb-5 flex items-center gap-2">
         <code data-testid="payment-code" className="min-w-0 flex-1 truncate rounded-xl bg-white/80 px-3 py-2 font-mono text-sm text-ink ring-1 ring-ink/10">{payment.code}</code>
         <button type="button" onClick={copy} className={`${glassButton} shrink-0 px-4 py-2 text-sm`}>
@@ -180,7 +177,7 @@ const InstantStep = ({ method, payment, amount, onDone }) => {
   );
 };
 
-const steps = { card: CardStep, wallet: PhoneStep, code: PhoneStep, bank: BankStep, instant: InstantStep };
+const steps = { card: CardStep, wallet: PhoneStep, bank: BankStep, instant: InstantStep };
 
 const PaymentStep = ({ method, payment, amount, onDone }) => {
   const { t } = useLocale();
@@ -191,7 +188,7 @@ const PaymentStep = ({ method, payment, amount, onDone }) => {
     <div className="px-4 py-10 sm:py-16">
       <Glass tone="solid" className="container mx-auto max-w-md rounded-3xl p-6 sm:p-8">
         <h1 className="mb-5 flex items-center justify-center gap-2 text-center text-2xl font-semibold tracking-tight text-ink">
-          {method.kind === 'wallet' || method.kind === 'code' ? <Smartphone aria-hidden="true" className="size-6" /> : <Lock aria-hidden="true" className="size-5" />}
+          {method.kind === 'wallet' ? <Smartphone aria-hidden="true" className="size-6" /> : <Lock aria-hidden="true" className="size-5" />}
           {title}
         </h1>
         <Step method={method} payment={payment} amount={amount} onDone={onDone} />

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { deliveryFee } from '../region/money';
+import { profileFor } from '../region/profiles';
 import {
-  DELIVERY_FEE,
   MAX_QUANTITY,
   STORAGE_KEY,
   cartReducer,
-  deliveryFee,
   getCartItems,
   getCartTotals,
   loadCart,
@@ -54,10 +54,14 @@ describe('prices per branch', () => {
     expect(getCartTotals(getCartItems(entries, 'kennedy'))).toEqual({ itemCount: 3, subtotal: 2 * 3500 + 4300 });
   });
 
-  it('charges delivery below the free-delivery threshold only', () => {
-    expect(deliveryFee(20000, 'delivery')).toBe(DELIVERY_FEE);
-    expect(deliveryFee(95000, 'delivery')).toBe(0);
-    expect(deliveryFee(20000, 'pickup')).toBe(0);
+  it('charges each country’s delivery fee below its free-delivery threshold only', () => {
+    const co = profileFor('CO');
+    expect(deliveryFee(20000, 'delivery', co)).toBe(5900);
+    expect(deliveryFee(95000, 'delivery', co)).toBe(0);
+    expect(deliveryFee(20000, 'pickup', co)).toBe(0);
+    const jp = profileFor('JP');
+    expect(deliveryFee(2000, 'delivery', jp)).toBe(330);
+    expect(deliveryFee(3500, 'delivery', jp)).toBe(0);
   });
 });
 

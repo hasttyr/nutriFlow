@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
@@ -12,6 +12,12 @@ import { STORAGE_KEY as LIST_KEY } from './list/list';
 import { STORAGE_KEY as LOCALE_KEY } from './i18n/i18n';
 import { setNodeStatus } from './distributed/cluster';
 import { applyLocation, setCountry } from './geo/region';
+
+// Most tests read the interface in English while shopping in Colombia (COP prices, Colombian
+// payment methods): a language picked by hand in that country.
+beforeEach(() => {
+  window.localStorage.setItem(LOCALE_KEY, JSON.stringify({ locale: 'en', country: 'CO' }));
+});
 
 const renderApp = (path = '/') => {
   const user = userEvent.setup();
@@ -29,6 +35,10 @@ const renderApp = (path = '/') => {
   return { user };
 };
 
+// A Colombian price as it reads on screen ("$ 13.500"), whatever the interface language.
+const copFormat = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const cop = (amount) => copFormat.format(amount).replace(/\s/g, ' ');
+
 const seedCart = (entries) => window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
 
 // Opens a glass select by its accessible name and clicks one of its options.
@@ -37,9 +47,15 @@ const pick = async (user, name, option) => {
   await user.click(screen.getByRole('option', { name: option }));
 };
 
-const fillDelivery = async (user) => {
+// Shops in another country with the interface still in English.
+const shopIn = (country) => {
+  setCountry(country);
+  window.localStorage.setItem(LOCALE_KEY, JSON.stringify({ locale: 'en', country }));
+};
+
+const fillDelivery = async (user, phone = '3001234567') => {
   await user.type(screen.getByLabelText('Full name'), 'Ada Lovelace');
-  await user.type(screen.getByLabelText('Mobile'), '3001234567');
+  await user.type(screen.getByLabelText('Mobile'), phone);
   await user.type(screen.getByLabelText('Address'), 'Calle 45 # 12-30');
   await user.type(screen.getByLabelText('Neighborhood'), 'Chapinero Alto');
 };
@@ -97,11 +113,11 @@ describe('Browsing', () => {
     // Each branch answers on its own schedule; wait until all three have replied.
     await waitFor(() => expect(within(offers).getAllByText(/\d+ ms/)).toHaveLength(3));
     expect(within(offers).getByText('Best price')).toBeInTheDocument();
-    expect(screen.getAllByText('COP 3,800').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(cop(3800)).length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole('button', { name: 'Buy at Kennedy' }));
     expect(screen.getByRole('combobox', { name: 'Branch' })).toHaveTextContent(/^Kennedy · Online/);
-    expect(screen.getAllByText('COP 3,500').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(cop(3500)).length).toBeGreaterThan(0);
   });
 
   it('shows not-found pages for unknown products and routes', () => {
@@ -183,7 +199,7 @@ describe('Account', () => {
     await user.type(screen.getByLabelText('Full name'), 'Ada Lovelace');
     await user.type(screen.getByLabelText('Email'), 'ada@example.com');
     await user.type(screen.getByLabelText('Mobile'), '3001234567');
-    expect(screen.getByLabelText('Mobile')).toHaveAccessibleDescription('10 digits');
+    expect(screen.getByLabelText('Mobile')).toHaveAccessibleDescription('E.g. 300 123 4567');
     await user.type(screen.getByLabelText('Password'), 'secret123');
     await user.type(screen.getByLabelText('Confirm password'), 'secret123');
     await user.click(screen.getByLabelText('I accept the terms and privacy policy'));
@@ -229,7 +245,7 @@ describe('Shopping list and cart', () => {
     expect(screen.getByTestId('list-progress')).toHaveTextContent('0 of 2 done');
     await user.click(screen.getByRole('checkbox', { name: 'Already have it: Whole milk' }));
     expect(screen.getByTestId('list-progress')).toHaveTextContent('1 of 2 done');
-    expect(screen.getByTestId('list-estimate')).toHaveTextContent('COP 3,800');
+    expect(screen.getByTestId('list-estimate')).toHaveTextContent(cop(3800));
 
     await user.click(screen.getByRole('button', { name: 'Move 1 missing item to cart' }));
     expect(screen.getByRole('heading', { level: 1, name: 'Your Cart' })).toBeInTheDocument();
@@ -254,7 +270,7 @@ describe('Checkout across the cluster', () => {
   it('places a delivery order replicated on every node', async () => {
     seedCart([{ id: 1, quantity: 2 }]);
     const { user } = renderApp('/checkout');
-    expect(screen.getByTestId('checkout-total')).toHaveTextContent('COP 13,500');
+    expect(screen.getByTestId('checkout-total')).toHaveTextContent(cop(13500));
 
     expect(screen.getByTestId('payment-country')).toHaveTextContent('Popular in Colombia');
     expect(screen.getByRole('radio', { name: /Nequi/ })).toBeChecked();
@@ -349,61 +365,78 @@ describe('Checkout across the cluster', () => {
     expect(screen.getByTestId('order-payment')).toHaveTextContent('Paid with card •••• 4242');
   });
 
-  it('offers Pix and Boleto in Brazil', async () => {
-    setCountry('BR');
+  it('offers Pix and Boleto in Brazil, priced in reais', async () => {
+    shopIn('BR');
     seedCart([{ id: 1, quantity: 1 }]);
     const { user } = renderApp('/checkout');
+    expect(screen.getByTestId('checkout-total')).toHaveTextContent(/^R\$\s13,08$/);
     expect(screen.getByRole('radio', { name: /Pix/ })).toBeChecked();
     expect(screen.getByRole('radio', { name: /Boleto/ })).toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: /Nequi/ })).not.toBeInTheDocument();
-    await fillDelivery(user);
+    await fillDelivery(user, '(11) 91234-5678');
     await user.click(screen.getByRole('button', { name: 'Place Order' }));
-    expect(screen.getByTestId('payment-code')).toHaveTextContent(/^00020126.*BR\.GOV\.BCB\.PIX/);
+    expect(screen.getByTestId('payment-code')).toHaveTextContent(/^00020126.*BR\.GOV\.BCB\.PIX.*5406\d*13\.08/);
     await user.click(screen.getByRole('button', { name: /paid \(simulate\)/ }));
     expect(await screen.findByTestId('order-payment')).toHaveTextContent('Paid with Pix');
   });
 
-  it('gives a voucher reference for OXXO in Mexico', async () => {
-    setCountry('MX');
+  it('gives a konbini payment number in Japan, priced in yen', async () => {
+    shopIn('JP');
+    seedCart([{ id: 1, quantity: 1 }]);
+    const { user } = renderApp('/checkout');
+    expect(screen.getByTestId('checkout-total')).toHaveTextContent(/^[¥￥]498$/);
+    await fillDelivery(user, '090-1234-5678');
+    await user.click(screen.getByRole('radio', { name: /Convenience store payment/ }));
+    await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    expect(await screen.findByTestId('order-voucher')).toHaveTextContent('Awaiting payment with Convenience store payment');
+  });
+
+  it('takes cash on delivery in Colombia', async () => {
     seedCart([{ id: 1, quantity: 1 }]);
     const { user } = renderApp('/checkout');
     await fillDelivery(user);
+    await user.click(screen.getByRole('radio', { name: /Cash/ }));
     await user.click(screen.getByRole('button', { name: 'Place Order' }));
-    expect(await screen.findByTestId('order-voucher')).toHaveTextContent('Awaiting payment with OXXO Pay');
+    expect(await screen.findByTestId('order-cash')).toHaveTextContent(`Have ${cop(9700)} ready in cash for the courier.`);
+    expect(screen.queryByTestId('order-payment')).not.toBeInTheDocument();
   });
 
-  it('only takes cards where there are no local methods', () => {
-    setCountry('FR');
+  it('approves Apple Pay in the United States, priced in dollars', async () => {
+    shopIn('US');
     seedCart([{ id: 1, quantity: 1 }]);
-    renderApp('/checkout');
-    expect(screen.getByTestId('payment-country')).toHaveTextContent('In France you pay by card.');
-    expect(document.querySelectorAll('input[name="payment"]')).toHaveLength(1);
+    const { user } = renderApp('/checkout');
+    expect(screen.getByTestId('checkout-total')).toHaveTextContent(/^\$5\.48$/);
+    await fillDelivery(user, '(212) 555-0123');
+    await user.click(screen.getByRole('radio', { name: /Apple Pay/ }));
+    await user.click(screen.getByRole('button', { name: 'Place Order' }));
+    expect(screen.getByRole('heading', { name: 'Pay with Apple Pay' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Approve' }));
+    expect(await screen.findByTestId('order-payment')).toHaveTextContent('Paid with Apple Pay');
   });
 
-  it('switches the methods when the shopper picks another country at checkout', async () => {
+  it('rejects a phone number that does not follow the country format', async () => {
+    shopIn('FR');
+    seedCart([{ id: 1, quantity: 1 }]);
+    const { user } = renderApp('/checkout');
+    await fillDelivery(user, '3001234567');
+    expect(screen.getByLabelText('Mobile')).toBeInvalid();
+    await user.clear(screen.getByLabelText('Mobile'));
+    await user.type(screen.getByLabelText('Mobile'), '06 12 34 56 78');
+    expect(screen.getByLabelText('Mobile')).toBeValid();
+  });
+
+  it('switches methods and language when the shopper picks another country at checkout', async () => {
     seedCart([{ id: 1, quantity: 1 }]);
     const { user } = renderApp('/checkout');
     const methods = () => [...document.querySelectorAll('input[name="payment"]')].map((input) => input.value);
-    expect(methods()).toEqual(['nequi', 'daviplata', 'pse', 'card']);
+    expect(methods()).toEqual(['nequi', 'pse', 'card', 'daviplata', 'cash']);
 
-    const regions = { Poland: ['blik', 'p24', 'payu', 'card'], Italy: ['satispay', 'bancomatpay', 'postepay', 'paypal', 'card'], 'United States': ['paypal', 'venmo', 'cashapp', 'card'] };
-    for (const [country, expected] of Object.entries(regions)) {
-      await user.click(screen.getByRole('combobox', { name: 'Paying from' }));
-      await user.click(screen.getByRole('option', { name: new RegExp(`^${country}`) }));
-      expect(methods(), country).toEqual(expected);
-    }
-  });
-
-  it('asks for the BLIK code in Poland', async () => {
-    setCountry('PL');
-    seedCart([{ id: 1, quantity: 1 }]);
-    const { user } = renderApp('/checkout');
-    await fillDelivery(user);
-    await user.type(screen.getByLabelText('BLIK code'), '777123');
-    await user.click(screen.getByRole('button', { name: 'Place Order' }));
-    expect(screen.getByText(/code 777123/)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Approve' }));
-    expect(await screen.findByTestId('order-payment')).toHaveTextContent('Paid with BLIK');
+    await user.click(screen.getByRole('combobox', { name: 'Paying from' }));
+    await user.click(screen.getByRole('option', { name: /^Brazil/ }));
+    expect(methods()).toEqual(['pix', 'card', 'boleto', 'cash']);
+    // The language picked by hand belonged to Colombia; Brazil brings its own.
+    expect(screen.getByRole('heading', { level: 1, name: 'Finalizar pedido' })).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('lang', 'pt');
   });
 
   it('asks the user to shop first when checking out with an empty cart', () => {
@@ -416,10 +449,10 @@ describe('Checkout across the cluster', () => {
 describe('Countries nutriFlow does not serve', () => {
   it('switches the app off and lets a demo pick a served country', async () => {
     act(() => {
-      applyLocation({ lat: 35.68, lon: 139.69, accuracy: 5000, source: 'ip', countryCode: 'JP' });
+      applyLocation({ lat: 52.52, lon: 13.4, accuracy: 5000, source: 'ip', countryCode: 'DE' });
     });
     const { user } = renderApp('/products');
-    expect(screen.getByRole('heading', { name: 'nutriFlow is not available in Japan' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'nutriFlow is not available in Germany' })).toBeInTheDocument();
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
     await user.click(screen.getByRole('combobox', { name: 'Simulate another country (demo)' }));
     await user.click(screen.getByRole('option', { name: 'Colombia' }));
@@ -443,40 +476,44 @@ describe('System status', () => {
 });
 
 describe('Language picker', () => {
-  it('detects the language without saving it', () => {
+  it('follows the language of the country without saving it', () => {
+    window.localStorage.removeItem(LOCALE_KEY);
     renderApp('/');
-    expect(screen.getByRole('combobox', { name: 'Language' })).toHaveTextContent('English');
-    expect(document.documentElement).toHaveAttribute('lang', 'en');
+    expect(screen.getByRole('combobox', { name: 'Idioma' })).toHaveTextContent('Español');
+    expect(document.documentElement).toHaveAttribute('lang', 'es');
+    act(() => setCountry('JP'));
+    expect(screen.getByRole('combobox', { name: '言語' })).toHaveTextContent('日本語');
+    expect(document.documentElement).toHaveAttribute('lang', 'ja');
     expect(window.localStorage.getItem(LOCALE_KEY)).toBeNull();
   });
 
-  it('switches to Spanish with Colombian pesos and remembers the choice', async () => {
+  it('switches to Spanish with Colombian pesos and remembers the choice for the country', async () => {
     seedCart([{ id: 1, quantity: 2 }]);
     const { user } = renderApp('/cart');
 
     await pick(user, 'Language', 'Español');
     expect(screen.getByRole('heading', { level: 1, name: 'Tu carrito' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Carrito, 2 artículos' })).toBeInTheDocument();
-    expect(screen.getByTestId('cart-total')).toHaveTextContent(/^\$\s7\.600$/);
+    expect(screen.getByTestId('cart-total')).toHaveTextContent(cop(7600));
     expect(document.documentElement).toHaveAttribute('lang', 'es');
-    expect(window.localStorage.getItem(LOCALE_KEY)).toBe('es');
+    expect(JSON.parse(window.localStorage.getItem(LOCALE_KEY))).toEqual({ locale: 'es', country: 'CO' });
   });
 
-  it('offers Portuguese, Polish and Italian', async () => {
+  it('offers French and Japanese, keeping the country formats', async () => {
     seedCart([{ id: 1, quantity: 2 }]);
     const { user } = renderApp('/cart');
 
-    await pick(user, 'Language', 'Polski');
-    expect(screen.getByRole('heading', { level: 1, name: 'Twój koszyk' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Koszyk, 2 produkty' })).toBeInTheDocument();
-    expect(screen.getByText('Banany')).toBeInTheDocument();
+    await pick(user, 'Language', 'Français');
+    expect(screen.getByRole('heading', { level: 1, name: 'Votre panier' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Panier, 2 articles' })).toBeInTheDocument();
+    expect(screen.getByText('Bananes')).toBeInTheDocument();
 
-    await pick(user, 'Język', 'Português');
-    expect(screen.getByRole('heading', { level: 1, name: 'Seu carrinho' })).toBeInTheDocument();
-
-    await pick(user, 'Idioma', 'Italiano');
-    expect(screen.getByRole('heading', { level: 1, name: 'Il tuo carrello' })).toBeInTheDocument();
-    expect(document.documentElement).toHaveAttribute('lang', 'it');
+    await pick(user, 'Langue', '日本語');
+    expect(screen.getByRole('heading', { level: 1, name: 'カート' })).toBeInTheDocument();
+    expect(screen.getByText('バナナ')).toBeInTheDocument();
+    // Still shopping in Colombia: the money is formatted the Colombian way.
+    expect(screen.getByTestId('cart-total')).toHaveTextContent(cop(7600));
+    expect(document.documentElement).toHaveAttribute('lang', 'ja');
   });
 
   it('works from the keyboard', async () => {
@@ -489,18 +526,18 @@ describe('Language picker', () => {
     expect(screen.getByRole('option', { name: 'English' })).toHaveAttribute('aria-selected', 'true');
 
     await user.keyboard('{ArrowDown}{ArrowDown}');
-    expect(picker).toHaveAttribute('aria-activedescendant', screen.getByRole('option', { name: 'Polski' }).id);
+    expect(picker).toHaveAttribute('aria-activedescendant', screen.getByRole('option', { name: '日本語' }).id);
     await user.keyboard('{Enter}');
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
-    expect(document.documentElement).toHaveAttribute('lang', 'pl');
+    expect(document.documentElement).toHaveAttribute('lang', 'ja');
     expect(picker).toHaveFocus();
 
     // Typing jumps to a language; Escape closes without changing it.
-    await user.keyboard('i');
-    expect(picker).toHaveAttribute('aria-activedescendant', screen.getByRole('option', { name: 'Italiano' }).id);
+    await user.keyboard('f');
+    expect(picker).toHaveAttribute('aria-activedescendant', screen.getByRole('option', { name: 'Français' }).id);
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
-    expect(document.documentElement).toHaveAttribute('lang', 'pl');
+    expect(document.documentElement).toHaveAttribute('lang', 'ja');
   });
 
   it('closes when clicking elsewhere', async () => {

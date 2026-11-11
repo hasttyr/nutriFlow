@@ -3,8 +3,6 @@ import { priceAt, stockAt } from '../distributed/inventory';
 
 export const MIN_QUANTITY = 1;
 export const MAX_QUANTITY = 100;
-export const DELIVERY_FEE = 5900;
-export const FREE_DELIVERY_FROM = 90000;
 export const STORAGE_KEY = 'nutriflow/cart';
 
 const clampQuantity = (quantity) => Math.min(Math.max(quantity, MIN_QUANTITY), MAX_QUANTITY);
@@ -60,9 +58,6 @@ export const getCartTotals = (items) => ({
   itemCount: items.reduce((total, item) => total + item.quantity, 0),
   subtotal: items.reduce((total, item) => total + item.price * item.quantity, 0)
 });
-
-export const deliveryFee = (subtotal, fulfillment) =>
-  fulfillment === 'delivery' && subtotal < FREE_DELIVERY_FROM ? DELIVERY_FEE : 0;
 
 export const loadCart = () => {
   try {

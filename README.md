@@ -6,7 +6,8 @@ nutriFlow helps you do your groceries ("hacer mercado") wherever you are: it fin
 
 - **Location, most precise method first**: device GPS (with permission) → IP lookup → time zone → a point picked on the map. City and country come from reverse geocoding.
 - **Store map** (`/map`): real supermarkets, greengrocers, butchers, bakeries and markets near you from OpenStreetMap (Nominatim, with Overpass as backup, cached per area). Tap a store to see what it sells. Store names and positions are real; products, prices and stock are simulated, and each kind of store sells only its categories (a greengrocer has no coffee). If OpenStreetMap does not answer, clearly labelled demo stores appear around you.
-- **Currency by country**: pick any of 34 countries and every price is converted from COP with the day's rate (open.er-api.com, fixed fallback table).
+- **Five countries, configured as data** (Colombia, Brazil, United States, France, Japan): each one is a `RegionProfile` JSON in `src/region/profiles/` (language, CLDR locale, currency and its decimals, time zone, 12/24 h clock, phone and postal-code formats, name order, delivery fee, tax, tip, receipt type, fiscal IDs, payment methods, data-protection law) plus its own price list in `src/region/prices/`. There are no per-country branches in the code: adding a sixth country means adding those two files.
+- **Money as integers**: every amount is an integer in the minor unit of the local currency (centavos, cents, yen). COP and JPY are quoted without decimals, so their minor unit is the whole peso or yen. Intl (CLDR) formats them per country: `$ 25.900`, `R$ 25,90`, `$25.90`, `25,90 €`, `￥2,590`.
 - **Weekly planner** (`/planner`): write what you want to eat ("healthy, little red meat, cheap"); a free AI (Pollinations) returns a 7-day menu and a shopping list made only of products sold nearby, favouring typical dishes of your country. Every nearby store then quotes the basket in parallel (scatter-gather): cheapest complete store, best split across stores, and one tap to buy or move it to your list. If the AI does not answer, a rule-based planner (diet keywords in all five languages) builds the plan.
 - **Multi-device by link/QR**: the list and the plan are compressed into the URL fragment (`/share#…`) and shown as a QR code; open it on another device and import it. No server stores anything.
 - **Local products**: the 65-product catalog has diet tags (vegan, vegetarian, gluten, protein) and the countries where each product is typical; the home page shows the ones from your area.
@@ -17,7 +18,7 @@ nutriFlow helps you do your groceries ("hacer mercado") wherever you are: it fin
 - **System status** (`/status`): node health, latency, inventory version, requests, failures, a live call log, and controls to make any node slow or bring it down.
 - **Account screens (demo, not functional)**: `/login`, `/register` and `/profile` (orders, addresses, preferences and a session replicated across the nodes). Any details "log in" and open the same demo profile.
 - **Control views**: a 404 page for unknown routes and a 500 page at `/500`, which also replaces any screen that crashes while rendering.
-- **Five languages** (Spanish, English, Portuguese, Polish, Italian), picked automatically from the browser language or, for English browsers, from the visitor's time zone (e.g. Warsaw → Polish); a manual choice is remembered. Prices in Colombian pesos, liquid-glass UI built 100% with Tailwind, mobile-first.
+- **Five languages** (Spanish, Portuguese, English, French, Japanese), one JSON resource catalog per language in `src/i18n/locales/` with stable keys and English fallback. The language follows the country; a language picked by hand is remembered for that country. Numbers, money, dates and times always follow the country's profile. Japanese uses CJK fonts and strict line breaking. Liquid-glass UI built 100% with Tailwind, mobile-first.
 
 ## Simulated distributed system
 
@@ -69,19 +70,19 @@ Pollinations rejects anonymous calls made from a browser (it asks for a Turnstil
 | api.bigdatacloud.net (client endpoint) | City and country for a point |
 | nominatim.openstreetmap.org, Overpass mirrors | Nearby stores |
 | tile.openstreetmap.org | Map tiles (Leaflet) |
-| open.er-api.com | Exchange rates (cached a day) |
 | text.pollinations.ai (via `/api/ai`) | Weekly planner AI |
 
 ## Application structure
 
 - `src/distributed/` - simulated cluster (`cluster.js`, dynamic membership), store inventories (`inventory.js`), order saga (`orders.js`), React hooks (`hooks.js`)
-- `src/geo/` - location (`location.js`), nearby stores (`stores.js`), currency (`currency.js`) and the region store that ties them together (`region.js`)
+- `src/region/` - RegionProfiles (`profiles/*.json`), price lists (`prices/*.json`), the loader (`profiles.js`) and integer money helpers (`money.js`)
+- `src/geo/` - location (`location.js`), nearby stores (`stores.js`) and the region store that ties them together (`region.js`)
 - `src/planner/` - AI and rule-based weekly planner, basket pricing
 - `src/share/` - list/plan encoding for links and QR codes
 - `api/ai.js` - Vercel Function proxying the planner to Pollinations
 - `src/data/products.js` - catalog with base prices and icons
 - `src/cart/`, `src/list/` - cart and shopping list state (persisted in `localStorage`)
-- `src/i18n/` - language detection, formatting, and one message file per language in `locales/`
+- `src/i18n/` - translator and formatting (`i18n.js`), and one JSON catalog per language in `locales/`
 - `src/ui/` - liquid-glass primitives and shared Tailwind class sets
 - `src/components/`, `src/pages/` - layout and routes
 

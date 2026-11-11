@@ -1,0 +1,34 @@
+{
+  "country": "US",
+  "language": "en",
+  "locale": "en-US",
+  "currency": "USD",
+  "minorUnits": 2,
+  "timeZone": "America/New_York",
+  "hour12": true,
+  "firstDayOfWeek": 7,
+  "measurement": "imperial",
+  "pilotCity": { "name": "New York", "lat": 40.7505, "lon": -73.9934 },
+  "phone": { "prefix": "+1", "pattern": "\\(?\\d{3}\\)?(?: |-)?\\d{3}-?\\d{4}", "example": "(212) 555-0123" },
+  "postalCode": { "pattern": "\\d{5}(?:-\\d{4})?", "example": "10001" },
+  "nameOrder": "given-family",
+  "pricing": { "step": 10, "offset": -1 },
+  "delivery": { "fee": 399, "freeFrom": 3500 },
+  "tax": {
+    "name": "Sales tax",
+    "includedInPrice": false,
+    "rateScale": 100000,
+    "rates": { "standard": 8875, "reduced": 0, "prepared": 8875 },
+    "jurisdiction": "New York City (state 4% + city 4.5% + MCTD 0.375%)"
+  },
+  "tip": { "mode": "suggested", "suggestedPercents": [15, 18, 20], "defaultPercent": 18 },
+  "receipt": { "type": "Receipt", "authority": "NYS Department of Taxation and Finance" },
+  "fiscalId": { "person": null, "business": "EIN" },
+  "payments": ["card", "applepay", "googlepay", "ach", "paypal"],
+  "dataProtection": { "law": "NY SHIELD Act (CCPA/CPRA for California residents)", "authority": "NY Attorney General", "residency": "us" },
+  "sources": [
+    "https://cldr.unicode.org (en_US)",
+    "https://www.tax.ny.gov/pubs_and_bulls/tg_bulletins/st/quick_reference_guide_for_taxable_and_exempt_property_and_services.htm",
+    "https://ag.ny.gov/resources/organizations/data-breach-reporting/shield-act"
+  ]
+}

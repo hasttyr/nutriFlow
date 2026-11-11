@@ -15,7 +15,8 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import ServerError from './pages/ServerError';
 import Unavailable from './pages/Unavailable';
-import { isSupported, useRegion } from './geo/region';
+import { useRegion } from './geo/region';
+import { isSupported } from './region/profiles';
 // The map (Leaflet), the planner and the QR code load on demand.
 const StoreMap = lazy(() => import('./pages/StoreMap'));
 const Planner = lazy(() => import('./pages/Planner'));

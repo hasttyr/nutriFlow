@@ -1,108 +1,86 @@
-import messages from './messages';
-import { fractionDigits } from '../geo/currency';
+import { DEFAULT_COUNTRY, profileFor } from '../region/profiles';
+import { moneyFormatter } from '../region/money';
 
-export const LOCALES = ['es', 'en', 'pt', 'pl', 'it'];
+// Interface texts live outside the code: one JSON resource catalog per language in ./locales, with
+// stable keys. A key missing in a language falls back to English. Adding a language means adding
+// its catalog file.
+const catalogs = Object.fromEntries(
+  Object.entries(import.meta.glob('./locales/*.json', { eager: true })).map(([path, module]) => [
+    path.match(/(\w+)\.json$/)[1],
+    module.default ?? module
+  ])
+);
+
+export const FALLBACK_LOCALE = 'en';
+// Ordered as the five countries are presented: Colombia, Brazil, United States, France, Japan.
+export const LOCALES = ['es', 'pt', 'en', 'fr', 'ja'].filter((code) => catalogs[code]);
+export const messages = catalogs;
 export const STORAGE_KEY = 'nutriflow/locale';
-
-// Each language's own name, so a visitor can find theirs whatever the interface shows.
-export const LOCALE_NAMES = { es: 'Español', en: 'English', pt: 'Português', pl: 'Polski', it: 'Italiano' };
-
-// Prices are always Colombian pesos without decimals; each language formats them its own way,
-// e.g. "$ 12.900" (es), "COP 12,900" (en), "COP 12.900" (pt), "12 900 COP" (pl), "12.900 COP" (it).
-const intlTags = { en: 'en-US', es: 'es-CO', pt: 'pt-BR', pl: 'pl-PL', it: 'it-IT' };
 
 const isLocale = (value) => LOCALES.includes(value);
 
-// The time zone is a coarse, permission-free hint of where the visitor is.
-const regionTimeZones = {
-  es: [
-    'America/Bogota', 'America/Mexico_City', 'America/Monterrey', 'America/Merida', 'America/Cancun',
-    'America/Chihuahua', 'America/Ciudad_Juarez', 'America/Hermosillo', 'America/Mazatlan', 'America/Tijuana',
-    'America/Bahia_Banderas', 'America/Matamoros', 'America/Buenos_Aires', 'America/Cordoba', 'America/Lima',
-    'America/Santiago', 'America/Punta_Arenas', 'America/Caracas', 'America/Guayaquil', 'America/Montevideo',
-    'America/Asuncion', 'America/La_Paz', 'America/Panama', 'America/Costa_Rica', 'America/Guatemala',
-    'America/El_Salvador', 'America/Tegucigalpa', 'America/Managua', 'America/Havana', 'America/Santo_Domingo',
-    'America/Puerto_Rico', 'Pacific/Galapagos', 'Pacific/Easter', 'Europe/Madrid', 'Africa/Ceuta',
-    'Atlantic/Canary', 'Africa/Malabo'
-  ],
-  pt: [
-    'America/Sao_Paulo', 'America/Rio_Branco', 'America/Manaus', 'America/Belem', 'America/Fortaleza',
-    'America/Recife', 'America/Bahia', 'America/Maceio', 'America/Araguaina', 'America/Cuiaba',
-    'America/Campo_Grande', 'America/Porto_Velho', 'America/Boa_Vista', 'America/Santarem', 'America/Noronha',
-    'America/Eirunepe', 'Europe/Lisbon', 'Atlantic/Azores', 'Atlantic/Madeira', 'Atlantic/Cape_Verde',
-    'Africa/Luanda', 'Africa/Maputo', 'Africa/Bissau', 'Africa/Sao_Tome', 'Asia/Dili'
-  ],
-  pl: ['Europe/Warsaw'],
-  it: ['Europe/Rome', 'Europe/Vatican', 'Europe/San_Marino']
-};
-
-const timeZoneLocales = new Map(
-  Object.entries(regionTimeZones).flatMap(([locale, zones]) => zones.map((zone) => [zone, locale]))
-);
-
-export const localeForTimeZone = (timeZone = '') =>
-  timeZoneLocales.get(timeZone) ?? (timeZone.startsWith('America/Argentina/') ? 'es' : undefined);
-
-// "pt-BR" -> "pt"; languages the app does not speak give undefined.
-const localeForLanguage = (tag = '') => {
-  const base = tag.toLowerCase().split('-')[0];
-  return isLocale(base) ? base : undefined;
-};
-
-const browserLanguages = () => window.navigator.languages ?? [window.navigator.language];
-
-const browserTimeZone = () => {
+// Each language's own name ("español", "日本語"), so a visitor can find theirs whatever the interface shows.
+const ownName = (code) => {
   try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const name = new Intl.DisplayNames([code], { type: 'language' }).of(code);
+    return name.charAt(0).toLocaleUpperCase(code) + name.slice(1);
   } catch {
-    return undefined;
+    return code;
+  }
+};
+export const LOCALE_NAMES = Object.fromEntries(LOCALES.map((code) => [code, ownName(code)]));
+
+// The browser's language, for screens outside any served country.
+export const browserLocale = (languages = window.navigator.languages ?? [window.navigator.language]) =>
+  languages.map((tag = '') => tag.toLowerCase().split('-')[0]).find(isLocale) ?? FALLBACK_LOCALE;
+
+// The interface language follows the country's profile. A language picked by hand is remembered
+// together with the country it was picked in, so it holds there and gives way when the shopper
+// changes country.
+export const loadLocaleChoice = () => {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+    return stored && isLocale(stored.locale) ? stored : null;
+  } catch {
+    return null;
   }
 };
 
-// A language the visitor configured on purpose wins. English is many browsers' default, so it
-// does not outrank where the visitor is: an English browser in Warsaw gets Polish.
-export const detectLocale = ({ languages = browserLanguages(), timeZone = browserTimeZone() } = {}) => {
-  const spoken = languages.map(localeForLanguage).find(Boolean);
-  if (spoken && spoken !== 'en') return spoken;
-  return localeForTimeZone(timeZone) ?? spoken ?? 'en';
-};
-
-// Only an explicit choice is saved, so an untouched visitor is re-detected on every visit.
-export const loadLocale = () => {
+export const saveLocaleChoice = (locale, country) => {
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    return isLocale(stored) ? stored : detectLocale();
-  } catch {
-    return detectLocale();
-  }
-};
-
-export const saveLocale = (locale) => {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, locale);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ locale, country }));
   } catch {
     // Storage can be unavailable; the choice still applies for this visit.
   }
 };
 
-// Catalog prices are Colombian pesos; `money` converts them into the shopper's currency.
-export const createTranslator = (locale, money = { currency: 'COP', rate: 1 }) => {
-  const tag = intlTags[locale];
-  const pluralRules = new Intl.PluralRules(tag);
-  const numberFormat = new Intl.NumberFormat(tag);
-  const digits = fractionDigits(money.currency);
-  const priceFormat = new Intl.NumberFormat(tag, { style: 'currency', currency: money.currency, minimumFractionDigits: digits, maximumFractionDigits: digits });
+export const localeFor = (country, choice = loadLocaleChoice()) => {
+  if (choice && choice.country === country) return choice.locale;
+  return profileFor(country)?.language ?? choice?.locale ?? browserLocale();
+};
 
-  const timeFormat = new Intl.DateTimeFormat(tag, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const dateFormat = new Intl.DateTimeFormat(tag, { dateStyle: 'medium' });
+// Texts come in the interface language; numbers, money, dates and times follow the country's
+// profile (its CLDR locale, currency and time zone), whatever language the texts are in.
+export const createTranslator = (locale, profile = profileFor(DEFAULT_COUNTRY)) => {
+  const catalog = messages[locale] ?? messages[FALLBACK_LOCALE];
+  const pluralRules = new Intl.PluralRules(locale);
+  const numberFormat = new Intl.NumberFormat(profile.locale);
+  const formatMoney = moneyFormatter(profile);
+  const timeFormat = new Intl.DateTimeFormat(profile.locale, {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: profile.hour12, timeZone: profile.timeZone
+  });
+  const dateFormat = new Intl.DateTimeFormat(profile.locale, {
+    year: 'numeric', month: '2-digit', day: '2-digit', timeZone: profile.timeZone
+  });
 
   const formatNumber = (value) => numberFormat.format(value);
   const formatTime = (timestamp) => timeFormat.format(timestamp);
   const formatDate = (date) => dateFormat.format(date);
-  const formatPrice = (amount) => priceFormat.format(amount * money.rate);
+  // Amounts are integers in the currency's minor unit.
+  const formatPrice = (minor) => formatMoney(minor);
 
   const t = (key, vars = {}) => {
-    const entry = messages[locale][key] ?? messages.en[key];
+    const entry = catalog[key] ?? messages[FALLBACK_LOCALE][key];
     if (entry === undefined) {
       throw new Error(`Missing translation: ${key}`);
     }
@@ -114,8 +92,8 @@ export const createTranslator = (locale, money = { currency: 'COP', rate: 1 }) =
     });
   };
 
-  // Picks the current language from a { es, en, pt, pl, it } record, e.g. a product name.
-  const localize = (record) => record[locale] ?? record.en;
+  // Picks the current language from a { es, en, pt, fr, ja } record, e.g. a product name.
+  const localize = (record) => record[locale] ?? record[FALLBACK_LOCALE];
 
-  return { locale, currency: money.currency, t, localize, formatNumber, formatPrice, formatTime, formatDate };
+  return { locale, profile, currency: profile.currency, t, localize, formatNumber, formatPrice, formatTime, formatDate };
 };

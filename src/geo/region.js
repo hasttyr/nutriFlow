@@ -1,11 +1,12 @@
 import { useSyncExternalStore } from 'react';
 import { DEMO_NODES, setNodes } from '../distributed/cluster';
-import { DEFAULT_COUNTRY, FALLBACK_RATES, COUNTRY_CURRENCY, currencyFor, loadRates } from './currency';
+import { DEFAULT_COUNTRY, isSupported, profileFor } from '../region/profiles';
 import { distanceMeters, locateByGps, locateByIp, locateByTimeZone, reverseGeocode, watchGps } from './location';
 import { findStores, kindCategories, kindLabel, storeCode } from './stores';
 
-// The shopper's region: where they are, which country (and so currency) they shop in, and the
-// real stores around them, which join the simulated cluster as its nodes.
+// The shopper's region: where they are, which country they shop in (and so which RegionProfile
+// applies: language, currency, prices, taxes, payments), and the real stores around them, which
+// join the simulated cluster as its nodes.
 
 const LOCATION_KEY = 'nutriflow/location';
 const COUNTRY_KEY = 'nutriflow/country';
@@ -28,14 +29,13 @@ const write = (key, value) => {
 
 const pinnedCountry = () => {
   const stored = read(COUNTRY_KEY);
-  return COUNTRY_CURRENCY[stored] ? stored : null;
+  return isSupported(stored) ? stored : null;
 };
 
 let state = {
   location: null, // { lat, lon, accuracy, source, city, countryCode }
   country: pinnedCountry() ?? DEFAULT_COUNTRY,
   countryPinned: pinnedCountry() !== null,
-  rates: FALLBACK_RATES,
   locating: false,
   gpsError: null,
   stores: [],
@@ -56,14 +56,8 @@ export const subscribeRegion = (listener) => {
 export const getRegion = () => state;
 export const useRegion = () => useSyncExternalStore(subscribeRegion, getRegion);
 
-// Money settings for formatting: every catalog price is COP and gets converted.
-export const moneyOf = (region = state) => {
-  const currency = currencyFor(region.country);
-  return { currency, rate: region.rates[currency] ?? FALLBACK_RATES[currency] ?? 1 };
-};
-
-// The app only operates in the countries it has a currency (and payment methods) for.
-export const isSupported = (country) => Boolean(COUNTRY_CURRENCY[country]);
+// The profile of the country the shopper shops in; null outside the countries nutriFlow serves.
+export const activeProfile = (region = state) => profileFor(region.country);
 
 export const setCountry = (country) => {
   write(COUNTRY_KEY, country);
@@ -167,7 +161,6 @@ let stopWatch = () => {};
 export const startRegion = () => {
   if (started) return;
   started = true;
-  loadRates().then((rates) => setState({ rates }));
 
   const saved = read(LOCATION_KEY);
   if (saved && Number.isFinite(saved.lat)) {

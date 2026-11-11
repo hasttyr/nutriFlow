@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { ArrowRight, Minus, PackageOpen, Plus, Trash2, TriangleAlert } from 'lucide-react';
 import { useCart } from '../cart/useCart';
-import { FREE_DELIVERY_FROM, MAX_QUANTITY, MIN_QUANTITY } from '../cart/cart';
+import { MAX_QUANTITY, MIN_QUANTITY } from '../cart/cart';
 import { getNode } from '../distributed/cluster';
 import { useCluster } from '../distributed/hooks';
 import { useLocale } from '../i18n/useLocale';
@@ -15,7 +15,7 @@ const stepButton = 'flex size-11 cursor-pointer items-center justify-center roun
 const Cart = () => {
   const { items, subtotal, updateQuantity, removeItem } = useCart();
   const { activeNodeId } = useCluster();
-  const { t, localize, formatPrice } = useLocale();
+  const { t, localize, formatPrice, profile } = useLocale();
   const branch = getNode(activeNodeId).name;
 
   return (
@@ -119,7 +119,7 @@ const Cart = () => {
                     </div>
                   </dl>
                   <p className="mb-6 text-sm text-ink/70">
-                    {t('summary.freeFrom', { amount: formatPrice(FREE_DELIVERY_FROM) })} {t('summary.vat')}
+                    {t('summary.freeFrom', { amount: formatPrice(profile.delivery.freeFrom) })} {t('summary.vat')}
                   </p>
                   <Link to="/checkout" className={`${primaryButton} w-full`}>
                     {t('cart.checkout')}

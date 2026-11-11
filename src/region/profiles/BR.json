@@ -1,0 +1,35 @@
+{
+  "country": "BR",
+  "language": "pt",
+  "locale": "pt-BR",
+  "currency": "BRL",
+  "minorUnits": 2,
+  "timeZone": "America/Sao_Paulo",
+  "hour12": false,
+  "firstDayOfWeek": 7,
+  "measurement": "metric",
+  "pilotCity": { "name": "São Paulo", "lat": -23.5614, "lon": -46.6559 },
+  "phone": { "prefix": "+55", "pattern": "\\(?\\d{2}\\)? ?9\\d{4}-?\\d{4}", "example": "(11) 91234-5678" },
+  "postalCode": { "pattern": "\\d{5}-?\\d{3}", "example": "01310-100" },
+  "nameOrder": "given-family",
+  "pricing": { "step": 10, "offset": -1 },
+  "delivery": { "fee": 799, "freeFrom": 12000 },
+  "tax": {
+    "name": "ICMS",
+    "includedInPrice": true,
+    "rateScale": 100000,
+    "rates": { "standard": 18000, "reduced": 7000, "prepared": 18000 },
+    "disclosure": "Lei 12.741/2012: valor aproximado dos tributos"
+  },
+  "tip": { "mode": "optional", "suggestedPercents": [5, 10], "defaultPercent": 0 },
+  "receipt": { "type": "NFC-e", "authority": "SEFAZ-SP" },
+  "fiscalId": { "person": "CPF", "business": "CNPJ" },
+  "payments": ["pix", "card", "boleto", "cash"],
+  "dataProtection": { "law": "LGPD (Lei 13.709/2018)", "authority": "ANPD", "residency": "br" },
+  "sources": [
+    "https://cldr.unicode.org (pt_BR)",
+    "https://portal.fazenda.sp.gov.br (ICMS SP, NFC-e)",
+    "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2012/lei/l12741.htm",
+    "https://www.gov.br/anpd (LGPD)"
+  ]
+}

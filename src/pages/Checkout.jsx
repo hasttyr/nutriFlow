@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { ChevronDown, CircleCheck, CircleX, Clock, PackageOpen, Store, Truck } from 'lucide-react';
+import { Banknote, ChevronDown, CircleCheck, CircleX, Clock, PackageOpen, Store, Truck } from 'lucide-react';
 import { useCart } from '../cart/useCart';
-import { deliveryFee } from '../cart/cart';
 import { NODES, getNode } from '../distributed/cluster';
 import { missingAt, priceAt } from '../distributed/inventory';
 import { QUORUM, placeOrder, replicationFactor } from '../distributed/orders';
@@ -14,13 +13,14 @@ import StatusDot from '../ui/StatusDot';
 import { fieldInput, fieldLabel, pageHeading, primaryButton, sectionHeading } from '../ui/classes';
 import { Field, Notice } from '../ui/Field';
 import GlassSelect from '../ui/GlassSelect';
-import { moneyOf, useRegion } from '../geo/region';
-import { countryName } from '../geo/currency';
+import { useRegion } from '../geo/region';
+import { countryName } from '../region/profiles';
+import { deliveryFee, toMajor } from '../region/money';
 import BrandMark from '../payments/BrandMark';
 import CountryPicker from '../components/CountryPicker';
 import PaymentStep from '../payments/PaymentStep';
 import {
-  cardBrand, digitsOf, expiryValid, formatCardNumber, formatExpiry, hasLocalMethods, luhnValid, methodsFor, paymentCode
+  cardBrand, digitsOf, expiryValid, formatCardNumber, formatExpiry, luhnValid, methodName, methodsFor, paymentCode
 } from '../payments/methods';
 
 const initialForm = { name: '', phone: '', address: '', neighborhood: '', notes: '' };
@@ -48,7 +48,7 @@ const optionCard = 'flex min-h-11 cursor-pointer items-start gap-3 rounded-2xl b
 const Checkout = () => {
   const { items, clearCart } = useCart();
   const { activeNodeId, nodes } = useCluster();
-  const { t, locale, localize, formatPrice } = useLocale();
+  const { t, locale, localize, formatPrice, profile } = useLocale();
   const region = useRegion();
   const [fulfillment, setFulfillment] = useState('delivery');
   const [pickupNodeId, setPickupNodeId] = useState(activeNodeId);
@@ -56,7 +56,6 @@ const Checkout = () => {
   const [card, setCard] = useState(initialCard);
   const [cardError, setCardError] = useState(null);
   const [bankChoice, setBankChoice] = useState(null);
-  const [blikCode, setBlikCode] = useState('');
   const [pending, setPending] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [phase, setPhase] = useState('form');
@@ -67,11 +66,11 @@ const Checkout = () => {
   const pricingNodeId = fulfillment === 'pickup' ? pickupNodeId : activeNodeId;
   const lines = items.map((item) => ({ ...item, price: priceAt(pricingNodeId, item) }));
   const subtotal = lines.reduce((total, line) => total + line.price * line.quantity, 0);
-  const fee = deliveryFee(subtotal, fulfillment);
+  const fee = deliveryFee(subtotal, fulfillment, profile);
   const orderItems = items.map(({ id, quantity }) => ({ id, quantity }));
 
-  // The country picks the methods: its popular local ones first, card always available.
-  const methods = methodsFor(region.country);
+  // The country's profile lists its methods, most used first.
+  const methods = methodsFor(profile);
   const method = methods.find((option) => option.id === paymentId) ?? methods[0];
   const bank = method.banks?.includes(bankChoice) ? bankChoice : method.banks?.[0];
   const place = countryName(locale, region.country);
@@ -96,7 +95,7 @@ const Checkout = () => {
       const order = await placeOrder({ items: orderItems, fulfillment, nodeId: pricingNodeId }, setTrace);
       // The total is recomputed at the branch that actually took the order (it may have failed over).
       const orderSubtotal = items.reduce((total, item) => total + priceAt(order.nodeId, item) * item.quantity, 0);
-      setOutcome({ order, payment, requestedNodeId: pricingNodeId, total: orderSubtotal + deliveryFee(orderSubtotal, fulfillment) });
+      setOutcome({ order, payment, requestedNodeId: pricingNodeId, total: orderSubtotal + deliveryFee(orderSubtotal, fulfillment, profile) });
       clearCart();
       setPhase('done');
     } catch (error) {
@@ -117,12 +116,12 @@ const Checkout = () => {
       amount: formatPrice(total),
       phone: form.phone,
       bank,
-      blikCode,
       card: method.kind === 'card' ? { number: digitsOf(card.number), brand } : null,
-      code: paymentCode(method, total * moneyOf(region).rate)
+      code: paymentCode(method, toMajor(total, profile))
     };
-    // A voucher is paid later, so the order goes straight to the stores; everything else pays first.
-    if (method.kind === 'voucher') return submitOrder(payment, false);
+    // A voucher is paid later and cash on delivery, so those orders go straight to the stores;
+    // everything else pays first.
+    if (method.kind === 'voucher' || method.kind === 'cash') return submitOrder(payment, false);
     setPending(payment);
     setPhase('paying');
   };
@@ -169,20 +168,29 @@ const Checkout = () => {
               {t('order.replicated', { copies: order.copies, total: replicationFactor(), quorum: QUORUM })}
             </p>
             <p className="mt-1 text-sm text-ink/70">{t(`order.eta.${fulfillment}`)}</p>
-            {payment.method.kind !== 'voucher' && (
+            {payment.method.kind !== 'voucher' && payment.method.kind !== 'cash' && (
               <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/70 py-1 pr-4 pl-1 text-sm font-medium text-ink ring-1 ring-white/80" data-testid="order-payment">
                 <BrandMark id={payment.card?.brand ?? payment.method.id} />
                 {t('payment.paidWith', { method: payment.card ? t('payment.cardLabel', { last4: payment.card.number.slice(-4) }) : payment.method.name })}
               </p>
             )}
           </div>
+          {payment.method.kind === 'cash' && (
+            <div className="mb-6 rounded-2xl bg-white/80 p-4 ring-1 ring-white/80" data-testid="order-cash">
+              <p className="mb-1 flex items-center gap-2 font-semibold text-ink">
+                <Banknote aria-hidden="true" className="size-5 text-leaf-700" />
+                {t('payment.cashTitle')}
+              </p>
+              <p className="text-sm text-ink/75">{t('payment.cashText', { amount: formatPrice(total) })}</p>
+            </div>
+          )}
           {payment.method.kind === 'voucher' && (
             <div className="mb-6 rounded-2xl bg-white/80 p-4 ring-1 ring-amber-300/70" data-testid="order-voucher">
               <p className="mb-2 flex flex-wrap items-center gap-3 font-semibold text-ink">
                 <BrandMark id={payment.method.id} />
                 <span className="flex items-center gap-1.5">
                   <Clock aria-hidden="true" className="size-4 text-amber-700" />
-                  {t('payment.voucherTitle', { method: payment.method.name })}
+                  {t('payment.voucherTitle', { method: methodName(payment.method, t) })}
                 </span>
               </p>
               <p className="mb-3 text-sm text-ink/75">{t('payment.voucherText', { amount: formatPrice(total) })}</p>
@@ -299,11 +307,11 @@ const Checkout = () => {
                 <Field
                   {...fieldProps('phone')}
                   type="tel"
-                  inputMode="numeric"
+                  inputMode="tel"
                   autoComplete="tel-national"
-                  pattern="[0-9]{10}"
-                  title={t('checkout.phoneHint')}
-                  placeholder="3001234567"
+                  pattern={profile.phone.pattern}
+                  title={t('checkout.phoneHint', { example: profile.phone.example })}
+                  placeholder={profile.phone.example}
                   required
                 />
                 {fulfillment === 'delivery' && (
@@ -320,7 +328,7 @@ const Checkout = () => {
               <legend className={`${sectionHeading} float-left mb-4 w-full`}>{t('checkout.payment')}</legend>
               <div className="clear-both mb-4 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm text-ink/70" data-testid="payment-country">
-                  {hasLocalMethods(region.country) ? t('payment.localFor', { country: place }) : t('payment.cardOnly', { country: place })}
+                  {t('payment.localFor', { country: place })}
                 </p>
                 <span id="payment-country-label" className="sr-only">{t('payment.country')}</span>
                 <CountryPicker labelledBy="payment-country-label" />
@@ -331,7 +339,7 @@ const Checkout = () => {
                     <input type="radio" name="payment" value={option.id} checked={method.id === option.id} onChange={() => setPaymentId(option.id)} className="size-5 shrink-0 accent-citrus-600" />
                     <BrandMark id={option.id} />
                     <span className="min-w-0">
-                      <span className="block font-semibold text-ink">{option.kind === 'card' ? t('payment.card') : option.name}</span>
+                      <span className="block font-semibold text-ink">{methodName(option, t)}</span>
                       <span className="block text-sm text-ink/70">{t(methodHint(option))}</span>
                     </span>
                   </label>
@@ -414,22 +422,6 @@ const Checkout = () => {
                     <ChevronDown aria-hidden="true" className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-ink/70 transition-transform duration-200 in-aria-expanded:rotate-180" />
                   </GlassSelect>
                 </div>
-              )}
-
-              {method.kind === 'code' && (
-                <Field
-                  id="blikCode"
-                  label={t('payment.blikCode')}
-                  hint={t('payment.blikHint')}
-                  value={blikCode}
-                  onChange={(event) => setBlikCode(digitsOf(event.target.value).slice(0, 6))}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  pattern="[0-9]{6}"
-                  placeholder="123456"
-                  className="mt-5 max-w-48"
-                  required
-                />
               )}
 
               <Notice className="mt-5">{t('checkout.demoNotice')}</Notice>

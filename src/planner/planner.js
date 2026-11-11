@@ -10,7 +10,7 @@ export const MEALS = ['breakfast', 'lunch', 'dinner'];
 const AI_URL = '/api/ai';
 const STORAGE_KEY = 'nutriflow/plan';
 
-const LANGUAGE_NAMES = { es: 'Spanish', en: 'English', pt: 'Portuguese', pl: 'Polish', it: 'Italian' };
+const LANGUAGE_NAMES = { es: 'Spanish', en: 'English', pt: 'Portuguese', fr: 'French', ja: 'Japanese' };
 
 // Products sold (and in stock) by at least one online store of the current cluster.
 export const availableProducts = () => {
@@ -27,11 +27,11 @@ export const availableProducts = () => {
 
 // Diet hints in the five languages, used to filter the catalog before asking anyone.
 const KEYWORDS = {
-  vegan: ['vegan', 'vegano', 'vegana', 'wegan', 'wegańsk', 'vegetalian'],
-  vegetarian: ['vegetarian', 'vegetarian', 'vegetarian', 'wegetaria', 'vegetarian', 'sin carne', 'no meat', 'sem carne', 'bez mięsa', 'senza carne', 'vegetariano', 'vegetariana'],
-  glutenFree: ['gluten', 'celiac', 'celiaco', 'celíac', 'bezglut', 'senza glutine', 'sem glúten', 'sin gluten'],
-  protein: ['protein', 'proteína', 'proteina', 'białk', 'gym', 'músculo', 'muscle', 'keto', 'low carb', 'bajo en carb'],
-  cheap: ['barat', 'cheap', 'económic', 'economic', 'presupuesto', 'budget', 'tani', 'tanio', 'economico', 'poco dinero']
+  vegan: ['vegan', 'vegano', 'vegana', 'végétalien', 'végane', 'ヴィーガン', 'ビーガン', '完全菜食'],
+  vegetarian: ['vegetarian', 'vegetariano', 'vegetariana', 'végétarien', 'sin carne', 'no meat', 'sem carne', 'sans viande', 'ベジタリアン', '菜食', '肉なし'],
+  glutenFree: ['gluten', 'celiac', 'celiaco', 'celíac', 'cœliaque', 'sem glúten', 'sin gluten', 'sans gluten', 'グルテン'],
+  protein: ['protein', 'proteína', 'proteina', 'protéine', 'gym', 'músculo', 'muscle', 'keto', 'low carb', 'bajo en carb', 'たんぱく', 'タンパク', 'プロテイン', '筋トレ'],
+  cheap: ['barat', 'cheap', 'económic', 'economic', 'presupuesto', 'budget', 'poco dinero', 'pas cher', 'petit prix', '安い', '節約', '予算']
 };
 
 const fold = (text) => text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();

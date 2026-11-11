@@ -2,7 +2,7 @@ import { Crosshair, LoaderCircle, MapPin } from 'lucide-react';
 import { locatePrecisely, useRegion } from '../geo/region';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
-import { countryName } from '../geo/currency';
+import { countryName } from '../region/profiles';
 import CountryPicker from './CountryPicker';
 import { smallButton } from '../ui/classes';
 
