@@ -4,7 +4,8 @@ const tints = {
   bakery: 'bg-amber-100/90 text-amber-800 ring-amber-300/60',
   pantry: 'bg-citrus-100/90 text-citrus-800 ring-citrus-300/60',
   drinks: 'bg-rose-100/90 text-rose-700 ring-rose-300/60',
-  meat: 'bg-red-100/90 text-red-800 ring-red-300/60'
+  meat: 'bg-red-100/90 text-red-800 ring-red-300/60',
+  meals: 'bg-violet-100/90 text-violet-700 ring-violet-300/60'
 };
 
 const sizes = {

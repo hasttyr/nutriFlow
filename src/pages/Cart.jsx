@@ -119,7 +119,8 @@ const Cart = () => {
                     </div>
                   </dl>
                   <p className="mb-6 text-sm text-ink/70">
-                    {t('summary.freeFrom', { amount: formatPrice(profile.delivery.freeFrom) })} {t('summary.vat')}
+                    {t('summary.freeFrom', { amount: formatPrice(profile.delivery.freeFrom) })}{' '}
+                    {profile.tax.includedInPrice ? t('summary.taxNote.included') : t('summary.taxNote.excluded', { tax: profile.tax.name })}
                   </p>
                   <Link to="/checkout" className={`${primaryButton} w-full`}>
                     {t('cart.checkout')}

@@ -111,7 +111,6 @@
   "summary.free": "Free",
   "summary.freeFrom": "Free delivery from {amount}",
   "summary.total": "Total",
-  "summary.vat": "Prices include VAT.",
   "checkout.title": "Checkout",
   "checkout.fulfillment": "How do you want it?",
   "checkout.delivery": "Delivery",
@@ -397,5 +396,12 @@
   "payment.method.cash": "Cash",
   "payment.method.konbini": "Convenience store payment",
   "payment.cashTitle": "Pay on delivery",
-  "payment.cashText": "Have {amount} ready in cash for the courier."
+  "payment.cashText": "Have {amount} ready in cash for the courier.",
+  "category.meals": "Lunches",
+  "summary.taxIncluded": "Includes {tax}",
+  "summary.tip": "Tip",
+  "summary.tipHint": "It all goes to your courier.",
+  "summary.noTip": "No tip",
+  "summary.taxNote.included": "Prices include taxes.",
+  "summary.taxNote.excluded": "{tax} is added at checkout."
 }

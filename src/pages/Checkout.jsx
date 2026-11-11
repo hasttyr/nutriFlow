@@ -15,7 +15,7 @@ import { Field, Notice } from '../ui/Field';
 import GlassSelect from '../ui/GlassSelect';
 import { useRegion } from '../geo/region';
 import { countryName } from '../region/profiles';
-import { deliveryFee, toMajor } from '../region/money';
+import { quote, toMajor } from '../region/money';
 import BrandMark from '../payments/BrandMark';
 import CountryPicker from '../components/CountryPicker';
 import PaymentStep from '../payments/PaymentStep';
@@ -48,7 +48,7 @@ const optionCard = 'flex min-h-11 cursor-pointer items-start gap-3 rounded-2xl b
 const Checkout = () => {
   const { items, clearCart } = useCart();
   const { activeNodeId, nodes } = useCluster();
-  const { t, locale, localize, formatPrice, profile } = useLocale();
+  const { t, locale, localize, formatPercent, formatPrice, profile } = useLocale();
   const region = useRegion();
   const [fulfillment, setFulfillment] = useState('delivery');
   const [pickupNodeId, setPickupNodeId] = useState(activeNodeId);
@@ -61,12 +61,16 @@ const Checkout = () => {
   const [phase, setPhase] = useState('form');
   const [trace, setTrace] = useState([]);
   const [outcome, setOutcome] = useState(null);
+  const [tipChoice, setTipChoice] = useState(null);
 
   // Prices belong to the branch that will serve the order.
   const pricingNodeId = fulfillment === 'pickup' ? pickupNodeId : activeNodeId;
   const lines = items.map((item) => ({ ...item, price: priceAt(pricingNodeId, item) }));
-  const subtotal = lines.reduce((total, line) => total + line.price * line.quantity, 0);
-  const fee = deliveryFee(subtotal, fulfillment, profile);
+  // A tip picked in another country only holds if this country offers the same option.
+  const tipOptions = profile.tip.mode === 'none' ? [] : [0, ...profile.tip.suggestedPercents];
+  const tipPercent = tipOptions.includes(tipChoice) ? tipChoice : profile.tip.defaultPercent;
+  const totals = quote(lines, { fulfillment, tipPercent }, profile);
+  const taxLabel = (entry) => `${entry.name} ${formatPercent(entry.rate)}`;
   const orderItems = items.map(({ id, quantity }) => ({ id, quantity }));
 
   // The country's profile lists its methods, most used first.
@@ -94,8 +98,8 @@ const Checkout = () => {
     try {
       const order = await placeOrder({ items: orderItems, fulfillment, nodeId: pricingNodeId }, setTrace);
       // The total is recomputed at the branch that actually took the order (it may have failed over).
-      const orderSubtotal = items.reduce((total, item) => total + priceAt(order.nodeId, item) * item.quantity, 0);
-      setOutcome({ order, payment, requestedNodeId: pricingNodeId, total: orderSubtotal + deliveryFee(orderSubtotal, fulfillment, profile) });
+      const orderLines = items.map((item) => ({ ...item, price: priceAt(order.nodeId, item) }));
+      setOutcome({ order, payment, requestedNodeId: pricingNodeId, total: quote(orderLines, { fulfillment, tipPercent }, profile).total });
       clearCart();
       setPhase('done');
     } catch (error) {
@@ -110,7 +114,7 @@ const Checkout = () => {
       if (!luhnValid(card.number)) return setCardError({ field: 'cardNumber', message: t('payment.cardInvalid') });
       if (!expiryValid(card.expiry)) return setCardError({ field: 'cardExpiry', message: t('payment.expiryInvalid') });
     }
-    const total = subtotal + fee;
+    const { total } = totals;
     const payment = {
       method,
       amount: formatPrice(total),
@@ -324,6 +328,21 @@ const Checkout = () => {
               </div>
             </Glass>
 
+            {tipOptions.length > 0 && (
+              <Glass as="fieldset" tone="solid" className="rounded-3xl p-5 sm:p-6">
+                <legend className={`${sectionHeading} float-left mb-2 w-full`}>{t('summary.tip')}</legend>
+                <p className="clear-both mb-4 text-sm text-ink/70">{t('summary.tipHint')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {tipOptions.map((percent) => (
+                    <label key={percent} className={`${optionCard} min-w-24 items-center justify-center py-3 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-citrus-600`}>
+                      <input type="radio" name="tip" value={percent} checked={tipPercent === percent} onChange={() => setTipChoice(percent)} className="sr-only" />
+                      <span className="font-semibold text-ink tabular-nums">{percent === 0 ? t('summary.noTip') : formatPercent(percent / 100)}</span>
+                    </label>
+                  ))}
+                </div>
+              </Glass>
+            )}
+
             <Glass as="fieldset" tone="solid" className="rounded-3xl p-5 sm:p-6">
               <legend className={`${sectionHeading} float-left mb-4 w-full`}>{t('checkout.payment')}</legend>
               <div className="clear-both mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -428,7 +447,7 @@ const Checkout = () => {
 
               <p className="mt-6 flex items-baseline justify-between gap-3 text-ink tabular-nums lg:hidden" data-testid="mobile-total">
                 <span className="font-semibold">{t('summary.total')}</span>
-                <span className="text-lg font-semibold">{formatPrice(subtotal + fee)}</span>
+                <span className="text-lg font-semibold">{formatPrice(totals.total)}</span>
               </p>
               <button type="submit" className={`${primaryButton} mt-4 w-full lg:mt-6`}>
                 {t('checkout.placeOrder')}
@@ -457,20 +476,34 @@ const Checkout = () => {
               <dl className="space-y-3 border-t border-ink/10 pt-4 tabular-nums">
                 <div className="flex justify-between">
                   <dt className="text-ink/75">{t('summary.subtotal')}</dt>
-                  <dd className="font-medium">{formatPrice(subtotal)}</dd>
+                  <dd className="font-medium">{formatPrice(totals.subtotal)}</dd>
                 </div>
                 {fulfillment === 'delivery' && (
                   <div className="flex justify-between">
                     <dt className="text-ink/75">{t('summary.delivery')}</dt>
-                    <dd className="font-medium">{fee === 0 ? t('summary.free') : formatPrice(fee)}</dd>
+                    <dd className="font-medium">{totals.delivery === 0 ? t('summary.free') : formatPrice(totals.delivery)}</dd>
+                  </div>
+                )}
+                {totals.taxes.map((entry) => (
+                  <div key={entry.name + entry.rate} className="flex justify-between gap-4" data-testid="checkout-tax">
+                    <dt className="text-ink/75">{totals.taxIncluded ? t('summary.taxIncluded', { tax: taxLabel(entry) }) : taxLabel(entry)}</dt>
+                    <dd className={totals.taxIncluded ? 'text-ink/70' : 'font-medium'}>{formatPrice(entry.amount)}</dd>
+                  </div>
+                ))}
+                {tipOptions.length > 0 && (
+                  <div className="flex justify-between">
+                    <dt className="text-ink/75">{t('summary.tip')}</dt>
+                    <dd className="font-medium" data-testid="checkout-tip">{formatPrice(totals.tip)}</dd>
                   </div>
                 )}
                 <div className="flex justify-between border-t border-ink/10 pt-3">
                   <dt className="text-lg font-semibold">{t('summary.total')}</dt>
-                  <dd className="text-lg font-semibold" data-testid="checkout-total">{formatPrice(subtotal + fee)}</dd>
+                  <dd className="text-lg font-semibold" data-testid="checkout-total">{formatPrice(totals.total)}</dd>
                 </div>
               </dl>
-              <p className="mt-4 text-sm text-ink/65">{t('summary.vat')}</p>
+              <p className="mt-4 text-sm text-ink/65">
+                {totals.taxIncluded ? t('summary.taxNote.included') : t('summary.taxNote.excluded', { tax: profile.tax.name })}
+              </p>
             </Glass>
           </aside>
         </div>

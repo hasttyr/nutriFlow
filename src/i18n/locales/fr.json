@@ -111,7 +111,6 @@
   "summary.free": "Gratuite",
   "summary.freeFrom": "Livraison gratuite dès {amount}",
   "summary.total": "Total",
-  "summary.vat": "Prix TTC.",
   "checkout.title": "Validation de la commande",
   "checkout.fulfillment": "Comment la recevoir ?",
   "checkout.delivery": "Livraison",
@@ -397,5 +396,12 @@
   "payment.method.cash": "Espèces",
   "payment.method.konbini": "Paiement en supérette",
   "payment.cashTitle": "Paiement à la livraison",
-  "payment.cashText": "Préparez {amount} en espèces pour le livreur."
+  "payment.cashText": "Préparez {amount} en espèces pour le livreur.",
+  "category.meals": "Déjeuners",
+  "summary.taxIncluded": "Dont {tax}",
+  "summary.tip": "Pourboire",
+  "summary.tipHint": "Facultatif : entièrement reversé au livreur.",
+  "summary.noTip": "Sans pourboire",
+  "summary.taxNote.included": "Prix TTC.",
+  "summary.taxNote.excluded": "{tax} ajoutée au paiement."
 }

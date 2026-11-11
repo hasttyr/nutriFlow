@@ -70,14 +70,14 @@ describe('Browsing', () => {
 
   it('loads the catalog from the active branch node', async () => {
     renderApp('/products');
-    expect(await screen.findByText('65 products')).toBeInTheDocument();
+    expect(await screen.findByText('66 products')).toBeInTheDocument();
     expect(screen.getByTestId('data-source')).toHaveTextContent(/Chapinero inventory · \d+ ms/);
     expect(screen.getByRole('button', { name: 'Add Ground coffee to cart' })).toBeDisabled();
   });
 
   it('searches ignoring accents and filters by category', async () => {
     const { user } = renderApp('/products');
-    await screen.findByText('65 products');
+    await screen.findByText('66 products');
 
     const search = screen.getByLabelText('Search products');
     await user.type(search, 'cafe');
@@ -237,7 +237,7 @@ describe('Account', () => {
 describe('Shopping list and cart', () => {
   it('builds a list and moves what is missing to the cart', async () => {
     const { user } = renderApp('/products');
-    await screen.findByText('65 products');
+    await screen.findByText('66 products');
     await user.click(screen.getByRole('button', { name: 'Add Bananas to the list' }));
     await user.click(screen.getByRole('button', { name: 'Add Whole milk to the list' }));
     await user.click(screen.getByRole('link', { name: 'List' }));
@@ -405,7 +405,10 @@ describe('Checkout across the cluster', () => {
     shopIn('US');
     seedCart([{ id: 1, quantity: 1 }]);
     const { user } = renderApp('/checkout');
-    expect(screen.getByTestId('checkout-total')).toHaveTextContent(/^\$5\.48$/);
+    // Groceries pay no New York sales tax; the suggested 18 % tip is preselected.
+    expect(screen.queryByTestId('checkout-tax')).not.toBeInTheDocument();
+    expect(screen.getByTestId('checkout-tip')).toHaveTextContent('$0.27');
+    expect(screen.getByTestId('checkout-total')).toHaveTextContent(/^\$5\.75$/);
     await fillDelivery(user, '(212) 555-0123');
     await user.click(screen.getByRole('radio', { name: /Apple Pay/ }));
     await user.click(screen.getByRole('button', { name: 'Place Order' }));
@@ -552,7 +555,7 @@ describe('Language picker', () => {
 describe('Branch picker', () => {
   it('lists every branch with its health and switches the active one', async () => {
     const { user } = renderApp('/products');
-    await screen.findByText('65 products');
+    await screen.findByText('66 products');
     setNodeStatus('kennedy', 'slow');
 
     await user.click(screen.getByRole('combobox', { name: 'Branch' }));

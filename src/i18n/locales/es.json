@@ -111,7 +111,6 @@
   "summary.free": "Gratis",
   "summary.freeFrom": "Domicilio gratis desde {amount}",
   "summary.total": "Total",
-  "summary.vat": "Precios con IVA incluido.",
   "checkout.title": "Finalizar pedido",
   "checkout.fulfillment": "¿Cómo quieres recibirlo?",
   "checkout.delivery": "Domicilio",
@@ -397,5 +396,12 @@
   "payment.method.cash": "Efectivo",
   "payment.method.konbini": "Pago en tienda de conveniencia",
   "payment.cashTitle": "Pago contra entrega",
-  "payment.cashText": "Ten {amount} en efectivo para el repartidor."
+  "payment.cashText": "Ten {amount} en efectivo para el repartidor.",
+  "category.meals": "Almuerzos",
+  "summary.taxIncluded": "Incluye {tax}",
+  "summary.tip": "Propina",
+  "summary.tipHint": "Voluntaria: va completa al repartidor.",
+  "summary.noTip": "Sin propina",
+  "summary.taxNote.included": "Los precios incluyen impuestos.",
+  "summary.taxNote.excluded": "{tax} se suma al pagar."
 }

@@ -1,14 +1,14 @@
 import {
   Apple, Avocado, Banana, Bean, Beef, Can, CanSoda, Candy, Carrot, Cherry, Citrus, Coffee, Cookie, Croissant,
   CupSoda, Droplet, Drumstick, Egg, Fish, GlassWater, Grape, Ham, LeafyGreen, Leaf, Milk, Nut, Salad, Sandwich,
-  Shrimp, Soup, Sprout, Vegan, Wheat
+  Shrimp, Soup, Sprout, UtensilsCrossed, Vegan, Wheat
 } from 'lucide-react';
 
 // The catalog is the same in every country; what changes per country is data: prices live in
 // src/region/prices/<country>.json (minor units of the local currency), and names and units are
 // given in every interface language.
 
-export const categories = ['produce', 'meat', 'dairy', 'bakery', 'pantry', 'drinks'];
+export const categories = ['meals', 'produce', 'meat', 'dairy', 'bakery', 'pantry', 'drinks'];
 
 // Names and units in es, en, pt, fr, ja order.
 const lang = ([es, en, pt, fr, ja]) => ({ es, en, pt, fr, ja });
@@ -88,7 +88,9 @@ const products = [
   item(62, 'dairy', Milk, ['Queso camembert', 'Camembert', 'Queijo camembert', 'Camembert', 'カマンベールチーズ'], '250 g', ['vegetarian', 'protein'], ['FR']),
   item(63, 'pantry', Bean, ['Fríjol negro', 'Black beans', 'Feijão preto', 'Haricots noirs', '黒いんげん豆'], '1 kg', ['vegan', 'protein', 'carb'], ['BR']),
   item(64, 'pantry', Candy, ['Arequipe', 'Dulce de leche', 'Doce de leite', 'Confiture de lait', 'ミルクジャム'], '400 g', ['vegetarian'], TROPICS),
-  item(65, 'dairy', Egg, ['Huevos AA x12', 'AA eggs x12', 'Ovos AA x12', 'Œufs x12', '卵 12個'], tray, ['vegetarian', 'protein', 'breakfast'])
+  item(65, 'dairy', Egg, ['Huevos AA x12', 'AA eggs x12', 'Ovos AA x12', 'Œufs x12', '卵 12個'], tray, ['vegetarian', 'protein', 'breakfast']),
+  // Ready meals are taxed as prepared food (restaurant rate), not as groceries.
+  item(66, 'meals', UtensilsCrossed, ['Almuerzo del día', 'Lunch of the day', 'Prato feito do dia', 'Plat du jour', '日替わり弁当'], each, ['protein', 'carb'])
 ];
 
 export const isVegan = (product) => product.tags.includes('vegan');

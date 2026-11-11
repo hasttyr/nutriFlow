@@ -106,7 +106,6 @@
   "summary.free": "無料",
   "summary.freeFrom": "{amount} 以上で配送料無料",
   "summary.total": "合計",
-  "summary.vat": "価格は税込です。",
   "checkout.title": "ご注文手続き",
   "checkout.fulfillment": "受け取り方法",
   "checkout.delivery": "配達",
@@ -384,5 +383,12 @@
   "payment.method.cash": "現金",
   "payment.method.konbini": "コンビニ払い",
   "payment.cashTitle": "代金引換",
-  "payment.cashText": "配達員に {amount} を現金でお支払いください。"
+  "payment.cashText": "配達員に {amount} を現金でお支払いください。",
+  "category.meals": "弁当・ランチ",
+  "summary.taxIncluded": "うち{tax}",
+  "summary.tip": "チップ",
+  "summary.tipHint": "任意。全額が配達員に渡ります。",
+  "summary.noTip": "なし",
+  "summary.taxNote.included": "価格は税込です。",
+  "summary.taxNote.excluded": "{tax}はお会計時に加算されます。"
 }

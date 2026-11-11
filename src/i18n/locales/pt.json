@@ -111,7 +111,6 @@
   "summary.free": "Grátis",
   "summary.freeFrom": "Entrega grátis a partir de {amount}",
   "summary.total": "Total",
-  "summary.vat": "Preços com IVA incluído.",
   "checkout.title": "Finalizar pedido",
   "checkout.fulfillment": "Como você quer receber?",
   "checkout.delivery": "Entrega",
@@ -397,5 +396,12 @@
   "payment.method.cash": "Dinheiro",
   "payment.method.konbini": "Pagamento em loja de conveniência",
   "payment.cashTitle": "Pagamento na entrega",
-  "payment.cashText": "Tenha {amount} em dinheiro para o entregador."
+  "payment.cashText": "Tenha {amount} em dinheiro para o entregador.",
+  "category.meals": "Almoços",
+  "summary.taxIncluded": "Inclui {tax}",
+  "summary.tip": "Gorjeta",
+  "summary.tipHint": "Opcional: vai toda para o entregador.",
+  "summary.noTip": "Sem gorjeta",
+  "summary.taxNote.included": "Os preços incluem impostos.",
+  "summary.taxNote.excluded": "{tax} é somado no pagamento."
 }

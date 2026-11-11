@@ -21,3 +21,30 @@ export const moneyFormatter = (profile) => {
 
 export const deliveryFee = (subtotal, fulfillment, profile) =>
   fulfillment === 'delivery' && subtotal < profile.delivery.freeFrom ? profile.delivery.fee : 0;
+
+const lineTotal = (line) => line.price * line.quantity;
+
+// The order's money, all from the profile: subtotal, delivery, taxes per rate, tip and total.
+// Ready meals pay the prepared-food rate, groceries the reduced one. Included taxes (VAT style)
+// are shown but not added; excluded ones (US sales tax) are added. Each tax rounds once.
+// shortcut: the delivery fee is not taxed; tax it here if a country's rules require it.
+export const quote = (lines, { fulfillment, tipPercent }, profile) => {
+  const { tax, tip } = profile;
+  const subtotal = lines.reduce((sum, line) => sum + lineTotal(line), 0);
+  const bases = {};
+  for (const line of lines) {
+    const category = line.category === 'meals' ? 'prepared' : 'reduced';
+    bases[category] = (bases[category] ?? 0) + lineTotal(line);
+  }
+  const taxes = Object.entries(bases)
+    .filter(([category]) => tax.rates[category] > 0)
+    .map(([category, base]) => {
+      const rate = tax.rates[category];
+      const amount = Math.round(tax.includedInPrice ? (base * rate) / (tax.rateScale + rate) : (base * rate) / tax.rateScale);
+      return { name: (category === 'prepared' && tax.preparedName) || tax.name, rate: rate / tax.rateScale, amount };
+    });
+  const tipAmount = tip.mode === 'none' ? 0 : Math.round((subtotal * (tipPercent ?? tip.defaultPercent)) / 100);
+  const delivery = deliveryFee(subtotal, fulfillment, profile);
+  const added = tax.includedInPrice ? 0 : taxes.reduce((sum, entry) => sum + entry.amount, 0);
+  return { subtotal, delivery, taxes, taxIncluded: tax.includedInPrice, tip: tipAmount, total: subtotal + delivery + added + tipAmount };
+};

@@ -231,7 +231,7 @@ describe('sharing between devices', () => {
 
 describe('catalog', () => {
   it('tags every product and gives local products to several countries', () => {
-    expect(products.length).toBe(65);
+    expect(products.length).toBe(66);
     expect(products.every((product) => Array.isArray(product.tags) && Array.isArray(product.local))).toBe(true);
     for (const country of COUNTRIES) expect(products.some((product) => product.local.includes(country)), country).toBe(true);
   });

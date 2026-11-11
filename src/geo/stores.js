@@ -7,12 +7,12 @@ export const MAX_STORES = 12;
 
 const KINDS = {
   supermarket: { categories: null, label: ['Supermercado', 'Supermarket', 'Supermercado', 'Supermarché', 'スーパー'] },
-  convenience: { categories: ['produce', 'dairy', 'bakery', 'pantry', 'drinks'], label: ['Tienda de barrio', 'Corner shop', 'Mercearia', 'Épicerie de quartier', 'コンビニ'] },
+  convenience: { categories: ['meals', 'produce', 'dairy', 'bakery', 'pantry', 'drinks'], label: ['Tienda de barrio', 'Corner shop', 'Mercearia', 'Épicerie de quartier', 'コンビニ'] },
   greengrocer: { categories: ['produce'], label: ['Fruver / verdulería', 'Greengrocer', 'Hortifruti', 'Primeur', '八百屋'] },
   butcher: { categories: ['meat'], label: ['Carnicería', 'Butcher', 'Açougue', 'Boucherie', '精肉店'] },
   bakery: { categories: ['bakery', 'dairy', 'drinks'], label: ['Panadería', 'Bakery', 'Padaria', 'Boulangerie', 'パン屋'] },
   marketplace: { categories: ['produce', 'meat', 'pantry'], label: ['Plaza de mercado', 'Market hall', 'Feira / mercado', 'Marché', '市場'] },
-  deli: { categories: ['meat', 'dairy', 'bakery'], label: ['Charcutería', 'Deli', 'Delicatessen', 'Charcuterie', '惣菜店'] },
+  deli: { categories: ['meals', 'meat', 'dairy', 'bakery'], label: ['Charcutería', 'Deli', 'Delicatessen', 'Charcuterie', '惣菜店'] },
   seafood: { categories: ['meat'], label: ['Pescadería', 'Fishmonger', 'Peixaria', 'Poissonnerie', '鮮魚店'] }
 };
 const ALIASES = { grocery: 'convenience', general: 'convenience', farm: 'greengrocer', dairy: 'deli', department_store: 'supermarket' };

@@ -74,6 +74,8 @@ export const createTranslator = (locale, profile = profileFor(DEFAULT_COUNTRY)) 
   });
 
   const formatNumber = (value) => numberFormat.format(value);
+  const percentFormat = new Intl.NumberFormat(profile.locale, { style: 'percent', maximumFractionDigits: 3 });
+  const formatPercent = (fraction) => percentFormat.format(fraction);
   const formatTime = (timestamp) => timeFormat.format(timestamp);
   const formatDate = (date) => dateFormat.format(date);
   // Amounts are integers in the currency's minor unit.
@@ -95,5 +97,5 @@ export const createTranslator = (locale, profile = profileFor(DEFAULT_COUNTRY)) 
   // Picks the current language from a { es, en, pt, fr, ja } record, e.g. a product name.
   const localize = (record) => record[locale] ?? record[FALLBACK_LOCALE];
 
-  return { locale, profile, currency: profile.currency, t, localize, formatNumber, formatPrice, formatTime, formatDate };
+  return { locale, profile, currency: profile.currency, t, localize, formatNumber, formatPercent, formatPrice, formatTime, formatDate };
 };
