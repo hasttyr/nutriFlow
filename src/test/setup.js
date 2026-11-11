@@ -5,6 +5,7 @@ import { configureSimulation, resetCluster } from '../distributed/cluster';
 import { resetInventory } from '../distributed/inventory';
 import { resetRegion } from '../geo/region';
 import { resetLive } from '../live/store';
+import { signOut } from '../live/session';
 
 // No network delay and no random failures: tests inject failures explicitly.
 configureSimulation({ latencyScale: 0, failureRate: 0, random: () => 0.5 });
@@ -14,6 +15,7 @@ afterEach(() => {
   window.localStorage.clear();
   window.sessionStorage.clear();
   resetLive();
+  signOut();
   resetCluster();
   resetInventory();
   resetRegion();
