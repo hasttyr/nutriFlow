@@ -586,5 +586,11 @@
   "nav.status": "システム",
   "nav.operation": "運用",
   "nav.profiles": "プロファイル",
-  "nav.monitor": "監視"
+  "nav.monitor": "監視",
+  "notify.paymentFailed.customer": "注文 {id} の支払いが拒否されたため、注文をキャンセルしました。",
+  "orders.paymentPending": "決済ゲートウェイで支払いを確認しています… 応答があり次第、注文が進みます。",
+  "orders.paymentFailed": "支払いが拒否されたため、注文はキャンセルされました。",
+  "merchant.paymentPending": "支払いの確認待ちです。",
+  "admin.monitor.online": "稼働中",
+  "admin.monitor.offline": "停止"
 }

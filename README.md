@@ -36,6 +36,32 @@ The platform serves four actors, each with its own app. Sign in at `/login` and 
 
 Demo: open `/orders/<id>` in one tab, `/merchant` and `/courier` in two others, and watch the order move; or turn on the autopilot in `/admin`.
 
+## Backend (live mode)
+
+The same web app runs against real regional servers. Two terminals:
+
+```bash
+npm run backend      # broker + 5 regional APIs (+ Colombia's replica) + payments, logistics, notifications
+npm run dev:live     # the web app talking to them (http://localhost:5173)
+```
+
+No Docker needed for development: every subsystem is a Node process on this machine, with SQLite built into Node. For the delivery, `docker compose up --build` runs the same processes as containers (one image, one container per process, one volume per region) and serves the web app on http://localhost:4173.
+
+| Process | Port | Role |
+| --- | --- | --- |
+| `broker` | tcp/1883 (MQTT) | Middleware: publish/subscribe, persistent queues (QoS 1), retained state, Last Will |
+| `co-1` `br-1` `us-1` `fr-1` `jp-1` | http/4101–4105 | Regional API, one per country, same code (`REGION=…`); owns its country's orders in its own SQLite file |
+| `co-2` | http/4111 | Replica of Colombia on the same data; the web app fails over to it |
+| `payments` | — | Payment gateway mock: idempotent charges and refunds |
+| `logistics` | — | Courier fleet, assignment by proximity/availability/load, live positions (QoS 0, once a second) |
+| `notifications` | — | One message per actor and step, rendered by each app in its own language and time zone |
+
+`server/directory.json` is the naming service (country → region URLs, primary first, then replicas). Order rules (`src/live/rules.js`), prices (`src/region/pricing.js`, `money.js`) and the country data are the same files the browser uses: one code base.
+
+**How a command travels:** the browser sends it by HTTP to its country's region (`POST /orders/:id/accept`, with a signed role token); the region applies the rule in an ACID transaction on its SQLite file, publishes the change on the broker, and every interested process reacts (payments charges, logistics assigns, notifications writes). Each region pushes its live state back to the browsers with Server-Sent Events. Prices and totals are always recomputed by the region, never taken from the browser, and cards never leave the browser (the gateway gets a token).
+
+**Breaking it on purpose** (type in the `npm run backend` terminal): `ps`, `stop payments` / `start payments` (payments wait in the broker and go through when it is back), `stop co-1` (the replica takes over), `stop logistics` (orders wait for a courier and get one when it returns). The admin console's Monitoring tab shows each process going down and up. `npm run test:backend` runs these failure scenarios automatically against the real processes.
+
 ## Simulated distributed system
 
 Everything lives in `src/distributed/`:

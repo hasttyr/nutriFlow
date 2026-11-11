@@ -1,4 +1,5 @@
 import { distanceMeters } from './location';
+import { seeded } from '../region/pricing';
 
 // Real shops near the shopper, from OpenStreetMap through the Overpass API. Only their name, kind
 // and position are real: assortment, prices and stock are simulated per store (see inventory.js).
@@ -133,14 +134,7 @@ const pick = (stores) => {
 };
 
 // Deterministic pseudo-random numbers so a synthetic store stays the same on every visit.
-export const seeded = (seed) => {
-  let value = 0;
-  for (const char of String(seed)) value = (value * 31 + char.charCodeAt(0)) >>> 0;
-  return () => {
-    value = (value * 1664525 + 1013904223) >>> 0;
-    return value / 2 ** 32;
-  };
-};
+export { seeded };
 
 // Used when no Overpass mirror answers: clearly labelled demo stores around the shopper.
 export const syntheticStores = (origin) => {

@@ -604,5 +604,11 @@
   "nav.status": "Système",
   "nav.operation": "Opérations",
   "nav.profiles": "Profils",
-  "nav.monitor": "Supervision"
+  "nav.monitor": "Supervision",
+  "notify.paymentFailed.customer": "Le paiement de la commande {id} a été refusé ; la commande est annulée.",
+  "orders.paymentPending": "Confirmation du paiement auprès de la passerelle… La commande avance dès sa réponse.",
+  "orders.paymentFailed": "Le paiement a été refusé et la commande annulée.",
+  "merchant.paymentPending": "En attente de la confirmation du paiement.",
+  "admin.monitor.online": "en ligne",
+  "admin.monitor.offline": "en panne"
 }

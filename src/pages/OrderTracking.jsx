@@ -95,7 +95,7 @@ const OrderTracking = () => {
                   <TrackingMap
                     store={order.storePosition}
                     home={order.destination}
-                    courier={showCourier ? courierPosition(order, courier, now) : null}
+                    courier={showCourier ? live.positions?.[order.courierId] ?? courierPosition(order, courier, now) : null}
                   />
                 </Suspense>
                 <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-ink" aria-live="polite">
@@ -117,11 +117,15 @@ const OrderTracking = () => {
               </Panel>
             )}
 
+            {order.payment.status === 'pending' && order.status !== 'cancelled' && (
+              <Notice>{t('orders.paymentPending')}</Notice>
+            )}
+
             {order.status === 'cancelled' && (
               <Panel>
                 <p role="status" className="flex items-center gap-2 text-lg font-semibold text-ink">
                   <CircleX aria-hidden="true" className="size-6 text-rose-600" />
-                  {t(order.reason === 'rejected' ? 'orders.rejected' : 'orders.cancelled')}
+                  {t(order.reason === 'rejected' ? 'orders.rejected' : order.reason === 'paymentFailed' ? 'orders.paymentFailed' : 'orders.cancelled')}
                 </p>
                 <p className="mt-2 text-ink/75" data-testid="refund-line">
                   {order.refund ? t('orders.refunded', { amount: orderLocale.formatPrice(order.refund.amount) }) : t('orders.notCharged')}

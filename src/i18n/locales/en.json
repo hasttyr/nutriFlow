@@ -604,5 +604,11 @@
   "nav.status": "System",
   "nav.operation": "Operations",
   "nav.profiles": "Profiles",
-  "nav.monitor": "Monitoring"
+  "nav.monitor": "Monitoring",
+  "notify.paymentFailed.customer": "The payment for order {id} was declined; the order was cancelled.",
+  "orders.paymentPending": "Confirming the payment with the gateway… The order moves on as soon as it answers.",
+  "orders.paymentFailed": "The payment was declined and the order was cancelled.",
+  "merchant.paymentPending": "Waiting for the payment to be confirmed.",
+  "admin.monitor.online": "online",
+  "admin.monitor.offline": "down"
 }

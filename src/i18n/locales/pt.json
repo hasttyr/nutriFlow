@@ -604,5 +604,11 @@
   "nav.status": "Sistema",
   "nav.operation": "Operação",
   "nav.profiles": "Perfis",
-  "nav.monitor": "Monitoramento"
+  "nav.monitor": "Monitoramento",
+  "notify.paymentFailed.customer": "O pagamento do pedido {id} foi recusado; o pedido foi cancelado.",
+  "orders.paymentPending": "Confirmando o pagamento com o gateway… O pedido avança assim que ele responder.",
+  "orders.paymentFailed": "O pagamento foi recusado e o pedido foi cancelado.",
+  "merchant.paymentPending": "Aguardando a confirmação do pagamento.",
+  "admin.monitor.online": "online",
+  "admin.monitor.offline": "fora do ar"
 }

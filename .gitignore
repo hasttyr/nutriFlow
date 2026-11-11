@@ -7,3 +7,6 @@ build
 .impeccable/review
 .impeccable/hook.cache.json
 .playwright-mcp
+
+# Backend databases (one SQLite file per service and region)
+server/data/

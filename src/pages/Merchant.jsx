@@ -22,7 +22,7 @@ const OrderCard = ({ order }) => {
   const action = {
     placed: (
       <>
-        <button type="button" onClick={() => acceptOrder(order.id)} className={`${smallButton} bg-leaf-600! text-white!`}>{t('merchant.accept')}</button>
+        <button type="button" onClick={() => acceptOrder(order.id)} disabled={order.payment.status === 'pending'} className={`${smallButton} bg-leaf-600! text-white! disabled:opacity-50`}>{t('merchant.accept')}</button>
         <button type="button" onClick={() => rejectOrder(order.id)} className={`${smallButton} text-rose-700`}>{t('merchant.reject')}</button>
       </>
     ),
@@ -46,6 +46,7 @@ const OrderCard = ({ order }) => {
         ))}
       </ul>
       <p className="mb-3 font-semibold text-ink tabular-nums">{money(order.totals.total)}</p>
+      {order.payment.status === 'pending' && <p className="mb-3 text-sm text-amber-800">{t('merchant.paymentPending')}</p>}
       {order.courierName && <p className="mb-3 text-sm text-ink/75">{t('merchant.courierComing', { name: order.courierName })}</p>}
       {order.status === 'ready' && order.fulfillment === 'delivery' && <p className="mb-3 text-sm text-amber-800">{t('orders.waitingCourier')}</p>}
       {action && <div className="flex flex-wrap gap-2">{action}</div>}

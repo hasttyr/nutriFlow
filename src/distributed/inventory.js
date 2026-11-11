@@ -1,19 +1,18 @@
 import products from '../data/products';
 import { activeProfile } from '../geo/region';
 import { seeded } from '../geo/stores';
-import { roundPrice } from '../region/money';
 import { listPrice } from '../region/profiles';
+import { storePrice } from '../region/pricing';
 import { NODES, getNode, markWrite, readWithFailover, rpcWithRetry } from './cluster';
 
 // Each branch prices and stocks the catalog on its own. The demo branches use fixed seeds (tests
 // rely on them); real nearby stores get a deterministic assortment from their id and kind, so the
 // same store always shows the same products, and a greengrocer never sells coffee.
-const DEMO_PRICE_FACTOR = { chapinero: 1.05, usaquen: 1.08, kennedy: 0.96 };
 const OUT_OF_STOCK = { chapinero: [13], usaquen: [4, 11], kennedy: [8, 17] };
 const LOW_STOCK = { chapinero: [2, 16], usaquen: [7], kennedy: [1] };
 export const LOW_STOCK_THRESHOLD = 5;
 
-const demoIndex = (nodeId) => Object.keys(DEMO_PRICE_FACTOR).indexOf(nodeId);
+const demoIndex = (nodeId) => ['chapinero', 'usaquen', 'kennedy'].indexOf(nodeId);
 
 // Whether the store sells this product's category at all.
 export const carries = (nodeId, product) => {
@@ -63,13 +62,11 @@ export class OutOfStockError extends Error {
   }
 }
 
-const priceFactor = (nodeId) => DEMO_PRICE_FACTOR[nodeId] ?? 0.9 + seeded(`${nodeId}#price`)() * 0.25;
-
 // The country's list price (minor units) with the store's own factor, rounded to local price endings.
 export const priceAt = (nodeId, product) => {
   const profile = activeProfile();
   if (!profile) return 0;
-  return roundPrice(listPrice(profile.country, product.id) * priceFactor(nodeId), profile.pricing);
+  return storePrice(listPrice(profile.country, product.id), nodeId, profile.pricing);
 };
 
 export const stockAt = (nodeId, productId) => stockOf(nodeId)[productId] ?? 0;

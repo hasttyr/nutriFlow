@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import { onlineCount, NODES } from '../distributed/cluster';
 import { useCluster } from '../distributed/hooks';
 import { useLive, updateLive } from '../live/store';
+import { REMOTE, call } from '../live/remote';
 import { ACTIVE, averageRating, fleet, setAutopilot } from '../live/orders';
 import { useLocale } from '../i18n/useLocale';
 import { createTranslator } from '../i18n/i18n';
@@ -103,10 +104,17 @@ const ProfileEditor = () => {
       tip: { mode: form.get('tipMode'), defaultPercent: Number(form.get('tipDefault')) },
       revenue: { commission: rate('commission') }
     };
-    updateLive((state) => ({ overrides: { ...state.overrides, [country]: override } }));
-    setSaved(true);
+    // Live mode: the country's region stores it and every app hears it; local mode: this browser.
+    const done = REMOTE
+      ? call(country, '/overrides', { method: 'PUT', body: override, role: 'admin' })
+      : updateLive((state) => ({ overrides: { ...state.overrides, [country]: override } }));
+    done.then(() => setSaved(true));
   };
   const reset = () => {
+    if (REMOTE) {
+      call(country, '/overrides', { method: 'DELETE', role: 'admin' }).then(() => setSaved(false));
+      return;
+    }
     updateLive((state) => {
       const { [country]: removed, ...rest } = state.overrides;
       return removed ? { overrides: rest } : {};
@@ -183,6 +191,17 @@ const Monitor = () => {
             );
           })}
         </ul>
+        {Object.keys(live.health).length > 0 && (
+          <ul className="mb-4 grid gap-1 text-sm" data-testid="services">
+            {Object.entries(live.health).sort().map(([name, health]) => (
+              <li key={name} className="flex items-center gap-2">
+                <span aria-hidden="true" className={`size-2.5 rounded-full ${health.status === 'online' ? 'bg-leaf-600' : 'bg-rose-600'}`} />
+                <span className="font-mono">{name}</span>
+                <span className="text-ink/60">{t(`admin.monitor.${health.status === 'online' ? 'online' : 'offline'}`)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         <Link to="/status" className={textLink}>{t('admin.monitor.open')}</Link>
       </Panel>
       <Panel title={t('admin.monitor.events')}>

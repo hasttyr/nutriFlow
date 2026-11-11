@@ -14,11 +14,16 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run lint && npm run test && npm run build"
+    "check": "npm run lint && npm run test && npm run build",
+    "dev:live": "vite --mode live",
+    "backend": "node --disable-warning=ExperimentalWarning server/start.js",
+    "test:backend": "node --disable-warning=ExperimentalWarning --test --test-concurrency=1 server/e2e.js"
   },
   "dependencies": {
+    "aedes": "^1.2.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.61.0",
+    "mqtt": "^5.16.1",
     "qrcode": "^1.5.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

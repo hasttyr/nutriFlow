@@ -1,0 +1,81 @@
+# nutriFlow on containers: `docker compose up --build`, then open http://localhost:4173
+# Every service resolves the broker by its DNS name (broker) on the compose network; the browser
+# reaches the regional APIs on the ports published below (server/directory.json).
+# Failure demo: `docker compose stop payments` / `docker compose start payments`,
+#               `docker compose stop co-1` (the web app fails over to co-2).
+
+x-node: &node
+  build: .
+  image: nutriflow
+  restart: unless-stopped
+  environment: &env
+    BROKER_URL: mqtt://broker:1883
+  depends_on: [broker]
+
+services:
+  broker:
+    <<: *node
+    command: node server/broker.js
+    depends_on: []
+    ports: ["1883:1883"]
+
+  # One regional API per country, each with its own volume: personal data stays in its region.
+  co-1:
+    <<: *node
+    environment: { <<: *env, REGION: CO, PORT: 4101, INSTANCE: co-1 }
+    ports: ["4101:4101"]
+    volumes: ["region-co:/data"]
+  co-2: # replica of Colombia: same data, takes over when co-1 is down
+    <<: *node
+    environment: { <<: *env, REGION: CO, PORT: 4111, INSTANCE: co-2 }
+    ports: ["4111:4111"]
+    volumes: ["region-co:/data"]
+  br:
+    <<: *node
+    environment: { <<: *env, REGION: BR, PORT: 4102, INSTANCE: br-1 }
+    ports: ["4102:4102"]
+    volumes: ["region-br:/data"]
+  us:
+    <<: *node
+    environment: { <<: *env, REGION: US, PORT: 4103, INSTANCE: us-1 }
+    ports: ["4103:4103"]
+    volumes: ["region-us:/data"]
+  fr:
+    <<: *node
+    environment: { <<: *env, REGION: FR, PORT: 4104, INSTANCE: fr-1 }
+    ports: ["4104:4104"]
+    volumes: ["region-fr:/data"]
+  jp:
+    <<: *node
+    environment: { <<: *env, REGION: JP, PORT: 4105, INSTANCE: jp-1 }
+    ports: ["4105:4105"]
+    volumes: ["region-jp:/data"]
+
+  payments:
+    <<: *node
+    command: node server/payments.js
+    volumes: ["payments:/data"]
+  logistics:
+    <<: *node
+    command: node server/logistics.js
+    volumes: ["logistics:/data"]
+  notifications:
+    <<: *node
+    command: node server/notifications.js
+    volumes: ["notifications:/data"]
+
+  web:
+    <<: *node
+    command: npx vite preview --mode live --host 0.0.0.0 --port 4173
+    depends_on: [co-1, br, us, fr, jp]
+    ports: ["4173:4173"]
+
+volumes:
+  region-co:
+  region-br:
+  region-us:
+  region-fr:
+  region-jp:
+  payments:
+  logistics:
+  notifications:

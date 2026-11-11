@@ -1,4 +1,5 @@
 import { getLive } from '../live/store';
+import { mergeProfile } from './overrides';
 
 // RegionProfile: everything that differs between countries lives in data, never in code.
 // Each country is one JSON file in ./profiles (the configuration contract of the assignment,
@@ -17,13 +18,6 @@ export const DEFAULT_COUNTRY = 'CO';
 // live in the shared state and are merged over the file. Merged profiles are cached so screens
 // keep a stable object until an override changes.
 const merged = new Map();
-const mergeProfile = (base, override) => ({
-  ...base,
-  tax: { ...base.tax, ...override.tax, rates: { ...base.tax.rates, ...override.tax?.rates } },
-  delivery: { ...base.delivery, ...override.delivery },
-  tip: { ...base.tip, ...override.tip },
-  revenue: { ...base.revenue, ...override.revenue }
-});
 
 export const profileFor = (country) => {
   const base = PROFILES[country];

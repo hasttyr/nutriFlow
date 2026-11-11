@@ -111,9 +111,9 @@ const Checkout = () => {
       const orderTotals = quote(orderLines, { fulfillment, tipPercent }, profile);
       // The issue time is stored in UTC (ISO 8601) and shown in the country's time zone.
       const issuedAt = new Date().toISOString();
-      setOutcome({ order, payment, requestedNodeId: pricingNodeId, lines: orderLines, totals: orderTotals, total: orderTotals.total, customer: form, issuedAt });
       // The confirmed order goes live: the store, a courier and the admin see it from now on.
-      await createOrder({ id: order.id, country: profile.country, nodeId: order.nodeId, customer: form, lines: orderLines, totals: orderTotals, payment, fulfillment });
+      const liveId = await createOrder({ id: order.id, country: profile.country, nodeId: order.nodeId, customer: form, lines: orderLines, totals: orderTotals, payment, fulfillment, tipPercent });
+      setOutcome({ order, liveId, payment, requestedNodeId: pricingNodeId, lines: orderLines, totals: orderTotals, total: orderTotals.total, customer: form, issuedAt });
       clearCart();
       setPhase('done');
     } catch (error) {
@@ -221,7 +221,7 @@ const Checkout = () => {
           <h2 className="mb-3 text-lg font-semibold text-ink">{t('order.trace')}</h2>
           <TraceList trace={order.trace} />
           <div className="mt-8 flex flex-wrap justify-center gap-2">
-            <Link to={`/orders/${order.id}`} className={primaryButton}>{t('orders.track')}</Link>
+            <Link to={`/orders/${outcome.liveId}`} className={primaryButton}>{t('orders.track')}</Link>
             <Link to="/products" className={glassButton}>{t('common.continueShopping')}</Link>
           </div>
         </Glass>

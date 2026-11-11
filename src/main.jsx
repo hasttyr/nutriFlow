@@ -8,11 +8,13 @@ import LocaleProvider from './i18n/LocaleProvider';
 import { startHeartbeat } from './distributed/cluster';
 import { startRegion } from './geo/region';
 import { startAutopilotLeader } from './live/orders';
+import { startLive } from './live/store';
 import './index.css';
 
 startHeartbeat();
 startRegion();
 startAutopilotLeader();
+startLive();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
