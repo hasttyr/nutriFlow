@@ -1,6 +1,6 @@
 # nutriFlow
 
-nutriFlow helps you do your groceries ("hacer mercado") wherever you are: it finds the real stores around you, plans your week's meals with a free AI, builds the shopping list, and tells you which nearby store is cheapest. It is the Práctica IV project for the Distributed Systems (SD) course, so the app **looks and behaves like a distributed system**: every nearby store is a node of a cluster simulated in the browser. There is no backend of our own (only a one-file proxy for the AI, see below).
+nutriFlow helps you do your groceries ("hacer mercado") wherever you are: it finds the real stores around you, plans your week's meals with a free AI, builds the shopping list, and tells you which nearby store is cheapest. It is the Práctica IV project for the Distributed Systems (SD) course, so the app **looks and behaves like a distributed system**: every nearby store is a node of a cluster simulated in the browser. It runs on its own in the browser, or against the real backend in `server/` (see Backend).
 
 ## Features
 
@@ -97,6 +97,8 @@ Try it: open `/status`, set Chapinero to **Down**, then browse products and plac
 | `npm run check` | Lint + tests + build (use before pushing) |
 
 ## Deployment
+
+Step-by-step guide (Vercel, local backend, Docker, failure demo, troubleshooting): [DEPLOY.md](DEPLOY.md).
 
 Pushing to `main` deploys on Vercel. `vercel.json` rewrites every route except `/api/*` to `index.html` so deep links such as `/products` work on reload.
 
