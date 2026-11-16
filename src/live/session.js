@@ -20,11 +20,11 @@ let session = read();
 const listeners = new Set();
 
 export const getSession = () => session;
-export const useSession = () =>
-  useSyncExternalStore((listener) => {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  }, getSession);
+export const subscribeSession = (listener) => {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+};
+export const useSession = () => useSyncExternalStore(subscribeSession, getSession);
 
 export const signIn = (next) => {
   session = { ...GUEST, ...next };

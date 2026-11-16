@@ -611,5 +611,8 @@
   "merchant.paymentPending": "Esperando la confirmación del pago.",
   "admin.monitor.online": "en línea",
   "admin.monitor.offline": "caído",
-  "checkout.holiday": "Hoy es festivo en el país ({name}). La tienda puede tardar más o abrir con otro horario."
+  "checkout.holiday": "Hoy es festivo en el país ({name}). La tienda puede tardar más o abrir con otro horario.",
+  "server.badgeLabel": "Servidor de la región {country}: {instance} ({host})",
+  "server.regions": "{online}/{total} regiones",
+  "server.down": "Sin conexión con la región"
 }

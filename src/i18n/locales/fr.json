@@ -611,5 +611,8 @@
   "merchant.paymentPending": "En attente de la confirmation du paiement.",
   "admin.monitor.online": "en ligne",
   "admin.monitor.offline": "en panne",
-  "checkout.holiday": "Aujourd’hui est un jour férié ({name}). Le commerce peut mettre plus de temps ou changer ses horaires."
+  "checkout.holiday": "Aujourd’hui est un jour férié ({name}). Le commerce peut mettre plus de temps ou changer ses horaires.",
+  "server.badgeLabel": "Serveur de la région {country} : {instance} ({host})",
+  "server.regions": "{online}/{total} régions",
+  "server.down": "Pas de connexion à la région"
 }

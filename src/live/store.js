@@ -79,13 +79,27 @@ const compose = () => {
   emit();
 };
 
-export const startLive = () =>
-  REMOTE
-    ? followRegions((country, { kind, value }) => {
-        regions = { ...regions, [country]: { ...regions[country], [kind]: value } };
-        compose();
-      })
-    : () => {};
+// Live mode follows only the regions this tab needs: its own country's for the customer, store
+// and courier apps, all five for the admin console. Called again when the role or country changes.
+let unfollow = () => {};
+let following = '';
+export const followCountries = (countries, role) => {
+  if (!REMOTE) return;
+  const key = `${role}:${countries.join(',')}`;
+  if (key === following) return;
+  following = key;
+  unfollow();
+  regions = {};
+  compose();
+  unfollow = followRegions(
+    countries,
+    (country, { kind, value }) => {
+      regions = { ...regions, [country]: { ...regions[country], [kind]: value } };
+      compose();
+    },
+    role
+  );
+};
 
 // Tests and "delete my data" start over.
 export const resetLive = (keep = {}) => {

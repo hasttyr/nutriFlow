@@ -611,5 +611,8 @@
   "merchant.paymentPending": "Aguardando a confirmação do pagamento.",
   "admin.monitor.online": "online",
   "admin.monitor.offline": "fora do ar",
-  "checkout.holiday": "Hoje é feriado ({name}). A loja pode demorar mais ou abrir em outro horário."
+  "checkout.holiday": "Hoje é feriado ({name}). A loja pode demorar mais ou abrir em outro horário.",
+  "server.badgeLabel": "Servidor da região {country}: {instance} ({host})",
+  "server.regions": "{online}/{total} regiões",
+  "server.down": "Sem conexão com a região"
 }
