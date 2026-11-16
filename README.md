@@ -42,14 +42,14 @@ Demo: open `/orders/<id>` in one tab, `/merchant` and `/courier` in two others, 
 
 ## Backend (live mode)
 
-The same web app runs against real regional servers. Two terminals:
+The same web app runs against real regional servers. `npm run demo` runs the whole platform on Docker (one container per process, web app on http://localhost:4173) and takes failure commands (`kill co-1`, `start co-1`, `ps`, `quit`). Without Docker, `npm run demo:local` starts the same processes with Node in one terminal (web app on http://localhost:5173). In live mode each tab connects only to its own country's region and the header names the instance serving it; the admin console follows all five. To keep the web app's logs apart, use two terminals:
 
 ```bash
 npm run backend      # broker + 5 regional APIs (+ Colombia's replica) + payments, logistics, notifications
 npm run dev:live     # the web app talking to them (http://localhost:5173)
 ```
 
-No Docker needed for development: every subsystem is a Node process on this machine, with SQLite built into Node. For the delivery, `docker compose up --build` runs the same processes as containers (one image, one container per process, one volume per region) and serves the web app on http://localhost:4173.
+No Docker needed for development: every subsystem is a Node process on this machine, with SQLite built into Node. For the delivery, `npm run demo` (or `docker compose up --build`) runs the same processes as containers (one image, one container per process, one volume per region).
 
 | Process | Port | Role |
 | --- | --- | --- |

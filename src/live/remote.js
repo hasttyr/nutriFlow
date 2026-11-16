@@ -47,34 +47,60 @@ export const call = async (country, path, { method = 'POST', body, role }) => {
   throw lastError ?? new Error(`No region for ${country}`);
 };
 
-// Follows every region's live state. Each region pushes partial updates ({ kind, value });
-// when its instance drops, the stream moves to the next replica.
-export const followRegions = (onUpdate) => {
-  const streams = Object.entries(directory.regions).map(([country, urls]) => {
+// Which instance serves each country right now, for the header badge: { CO: { instance, url, up } }.
+// Instances are named as the launcher names them: co-1 is the primary, co-2 the first replica.
+let connections = {};
+const watchers = new Set();
+const setConnection = (country, value) => {
+  connections = { ...connections, [country]: value };
+  watchers.forEach((watcher) => watcher());
+};
+export const getConnections = () => connections;
+export const subscribeConnections = (watcher) => {
+  watchers.add(watcher);
+  return () => watchers.delete(watcher);
+};
+
+// Follows the live state of the given countries' regions. Each region pushes partial updates
+// ({ kind, value }); when its instance drops, the stream moves to the next replica (failover).
+export const followRegions = (countries, onUpdate, role = 'admin') => {
+  const streams = countries.filter((country) => directory.regions[country]).map((country) => {
+    const urls = directory.regions[country];
     let index = 0;
     let source = null;
     let closed = false;
+    let timer = null;
+    const retry = (ms) => {
+      if (closed) return;
+      setConnection(country, { ...connections[country], up: false });
+      index += 1;
+      timer = setTimeout(open, ms);
+    };
     const open = async () => {
       if (closed) return;
       const url = urls[index % urls.length];
       try {
-        const token = await tokenFor(url, 'admin');
+        const token = await tokenFor(url, role);
+        if (closed) return;
         source = new EventSource(`${url}/stream?token=${encodeURIComponent(token)}`);
+        source.onopen = () => setConnection(country, { instance: `${country.toLowerCase()}-${(index % urls.length) + 1}`, url, up: true });
         source.onmessage = (event) => onUpdate(country, JSON.parse(event.data));
         source.onerror = () => {
           source.close();
-          index += 1;
-          setTimeout(open, 1000);
+          tokens.delete(`${url}|${role}`);
+          retry(1000);
         };
       } catch {
-        index += 1;
-        setTimeout(open, 1500);
+        retry(1500);
       }
     };
     open();
     return () => {
       closed = true;
+      clearTimeout(timer);
       source?.close();
+      connections = Object.fromEntries(Object.entries(connections).filter(([key]) => key !== country));
+      watchers.forEach((watcher) => watcher());
     };
   });
   return () => streams.forEach((stop) => stop());

@@ -611,5 +611,8 @@
   "merchant.paymentPending": "Waiting for the payment to be confirmed.",
   "admin.monitor.online": "online",
   "admin.monitor.offline": "down",
-  "checkout.holiday": "Today is a public holiday ({name}). The store may take longer or keep different hours."
+  "checkout.holiday": "Today is a public holiday ({name}). The store may take longer or keep different hours.",
+  "server.badgeLabel": "{country} region server: {instance} ({host})",
+  "server.regions": "{online}/{total} regions",
+  "server.down": "No connection to the region"
 }

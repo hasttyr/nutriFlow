@@ -7,6 +7,7 @@ import directory from './directory.json' with { type: 'json' };
 // Type commands while it runs to break things on purpose and watch the system cope:
 //   ps · stop <name> · start <name> · restart <name> · quit
 // The region instances and their ports come from directory.json, the naming service.
+// With --web (npm run demo:local) it also serves the web app in live mode, so one command runs everything.
 
 const regions = Object.fromEntries(
   Object.entries(directory.regions).flatMap(([country, urls]) =>
@@ -21,7 +22,8 @@ const SERVICES = {
   ...regions,
   payments: { file: 'server/payments.js', env: {} },
   logistics: { file: 'server/logistics.js', env: {} },
-  notifications: { file: 'server/notifications.js', env: {} }
+  notifications: { file: 'server/notifications.js', env: {} },
+  ...(process.argv.includes('--web') && { web: { file: 'node_modules/vite/bin/vite.js', args: ['--mode', 'live'], env: {} } })
 };
 
 const running = new Map();
@@ -32,7 +34,7 @@ const start = (name) => {
   const service = SERVICES[name];
   if (!service) return console.log(`unknown service ${name}; try: ${Object.keys(SERVICES).join(', ')}`);
   if (running.has(name)) return console.log(`${name} is already running`);
-  const child = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', service.file], { env: { ...process.env, ...service.env }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', service.file, ...(service.args ?? [])], { env: { ...process.env, ...service.env }, stdio: ['ignore', 'pipe', 'pipe'] });
   running.set(name, child);
   const print = (chunk) => chunk.toString().split('\n').filter(Boolean).forEach((line) => console.log(paint(name, line)));
   child.stdout.on('data', print);
@@ -80,4 +82,9 @@ createInterface({ input: process.stdin }).on('line', (line) => {
 });
 process.on('SIGINT', commands.quit);
 process.on('SIGTERM', commands.quit);
+if (SERVICES.web) {
+  await wait(1500);
+  console.log('\nnutriFlow is up. Open http://localhost:5173/login in four tabs and sign in as\n' +
+    'customer, store, courier and admin (each tab keeps its own session).\n');
+}
 console.log('Type "ps" to list services, "stop payments" to bring one down, "start payments" to bring it back.');

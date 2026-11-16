@@ -10,7 +10,8 @@ export const openDb = (name, schema) => {
   const file = resolve(DATA_DIR, `${name}.db`);
   mkdirSync(dirname(file), { recursive: true });
   const db = new DatabaseSync(file);
-  db.exec('PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;');
+  // busy_timeout first: a region and its replica start together and both switch the file to WAL.
+  db.exec('PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL;');
   db.exec(schema);
   return db;
 };

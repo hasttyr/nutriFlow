@@ -9,7 +9,9 @@ import { useSession } from '../live/session';
 import { useCart } from '../cart/useCart';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
+import { REMOTE } from '../live/remote';
 import ClusterBadge from './ClusterBadge';
+import ServerBadge from './ServerBadge';
 import LanguagePicker from './LanguagePicker';
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-citrus-500';
@@ -111,7 +113,7 @@ const Header = () => {
               </NavLink>
             )}
           </nav>
-          <ClusterBadge />
+          {REMOTE ? <ServerBadge /> : <ClusterBadge />}
           <LanguagePicker />
           <NavLink to="/notifications" aria-label={t('nav.notifications', { count: unread })} className={iconLink}>
             <Bell aria-hidden="true" className="size-5 md:size-4.5" strokeWidth={1.9} />
