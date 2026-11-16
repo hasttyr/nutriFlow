@@ -10,3 +10,10 @@ build
 
 # Backend databases (one SQLite file per service and region)
 server/data/
+
+# Assistant working notes and the course brief (not part of the deliverable)
+.claude/
+Proyecto de asignatura*.md
+
+# Intermediate page the report PDF is printed from (rebuilt by docs/pdf/build.mjs)
+docs/pdf/informe.html
