@@ -414,7 +414,7 @@ describe('Checkout across the cluster', () => {
     const receipt = await screen.findByTestId('receipt');
     expect(within(receipt).getByRole('heading', { name: '適格請求書' })).toBeInTheDocument();
     expect(receipt).toHaveTextContent('山田 花子');
-    expect(receipt).toHaveTextContent('〒150-0002, 東京都, 渋谷区, 渋谷2-21-1, ヒカリエ 8F');
+    expect(receipt).toHaveTextContent('〒150-0002 東京都 渋谷区 渋谷2-21-1 ヒカリエ 8F');
     expect(receipt).toHaveTextContent('Includes 消費税 8%');
     expect(within(receipt).getByTestId('receipt-total')).toHaveTextContent(/^[¥￥]2,386$/);
     // Stored in UTC, shown in Tokyo time.

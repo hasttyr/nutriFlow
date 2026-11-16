@@ -9,4 +9,4 @@ export const formatAddress = (address, profile) =>
   profile.address.fields
     .map((field) => (field === 'postalCode' && address[field] ? `${profile.postalCode.prefix ?? ''}${address[field]}` : address[field]))
     .filter(Boolean)
-    .join(', ');
+    .join(profile.address.separator ?? ', ');

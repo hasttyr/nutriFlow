@@ -68,11 +68,12 @@ export const setCountry = (country) => {
 // A nearby store as a cluster node: latency grows with distance.
 export const toNode = (store) => {
   const label = kindLabel(store.kind);
-  const name = store.name ?? `${label.es} ${store.id.slice(-3)}`;
+  // A store without a name (demo stores) is named in the country's language.
+  const name = store.name ?? `${label[activeProfile()?.language] ?? label.es} ${store.id.slice(-1)}`;
   return {
     ...store,
     name,
-    code: storeCode(name),
+    code: storeCode(/[A-Za-z]/.test(name.normalize('NFD')) ? name : label.en),
     zone: Object.fromEntries(Object.entries(label).map(([locale, text]) => [locale, `${text} · ${formatDistance(store.distance, activeProfile(), locale)}`])),
     categories: kindCategories(store.kind),
     baseLatency: Math.round(18 + store.distance / 35)

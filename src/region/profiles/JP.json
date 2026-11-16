@@ -40,7 +40,8 @@
       "city": "渋谷区",
       "street": "渋谷2-21-1",
       "building": "ヒカリエ 8F"
-    }
+    },
+    "separator": " "
   },
   "nameOrder": "family-given",
   "pricing": {
