@@ -2,6 +2,10 @@
 
 nutriFlow helps you do your groceries ("hacer mercado") wherever you are: it finds the real stores around you, plans your week's meals with a free AI, builds the shopping list, and tells you which nearby store is cheapest. It is the Práctica IV project for the Distributed Systems (SD) course, so the app **looks and behaves like a distributed system**: every nearby store is a node of a cluster simulated in the browser. It runs on its own in the browser, or against the real backend in `server/` (see Backend).
 
+## Course report
+
+The technical report (in Spanish) is [`docs/pdf/informe.pdf`](docs/pdf/informe.pdf), built from [`informe.md`](informe.md). To rebuild it, run `node docs/pdf/build.mjs`, which writes `docs/pdf/informe.html` (tables and mermaid diagrams, APA style), and print that page to PDF from a browser: Letter size, 2.54 cm margins. `docs/pdf/measure.js` is a Playwright snippet that prints the PDF and counts the body pages, which the course limits to 20.
+
 ## Features
 
 - **Location, most precise method first**: device GPS (with permission) → IP lookup → time zone → a point picked on the map. City and country come from reverse geocoding.
