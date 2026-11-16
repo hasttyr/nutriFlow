@@ -45,7 +45,7 @@ Abre tres pestañas: cliente (`/checkout` y luego `/orders/<id>`), tienda (`/mer
 | `start logistics` | Se asigna repartidor solo |
 | `start co-1` | La región vuelve |
 
-Para correr los mismos escenarios automáticamente: `npm run test:backend` (10 pruebas, cierra el backend de la terminal 1 antes porque usa los mismos puertos).
+Para correr los mismos escenarios automáticamente: `npm run test:backend` (12 pruebas, cierra el backend de la terminal 1 antes porque usa los mismos puertos).
 
 ### Mostrarlo desde celulares en la misma red
 
