@@ -20,7 +20,7 @@
   },
   "postalCode": {
     "pattern": "\\d{5}(?:-\\d{4})?",
-    "example": "10001"
+    "example": "10118"
   },
   "address": {
     "fields": [
