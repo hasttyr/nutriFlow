@@ -18,6 +18,7 @@ import { useRegion } from '../geo/region';
 import { countryName } from '../region/profiles';
 import { quote, toMajor } from '../region/money';
 import { nameFields } from '../region/address';
+import { holidayOn } from '../region/holidays';
 import { createOrder } from '../live/orders';
 import BrandMark from '../payments/BrandMark';
 import CountryPicker from '../components/CountryPicker';
@@ -78,6 +79,7 @@ const Checkout = () => {
   const tipOptions = profile.tip.mode === 'none' ? [] : [0, ...profile.tip.suggestedPercents];
   const tipPercent = tipOptions.includes(tipChoice) ? tipChoice : profile.tip.defaultPercent;
   const totals = quote(lines, { fulfillment, tipPercent }, profile);
+  const holiday = holidayOn(new Date(), profile);
   const taxLabel = (entry) => `${entry.name} ${formatPercent(entry.rate)}`;
   const orderItems = items.map(({ id, quantity }) => ({ id, quantity }));
 
@@ -287,6 +289,7 @@ const Checkout = () => {
                   </span>
                 </label>
               </div>
+              {holiday && <Notice className="mt-4">{t('checkout.holiday', { name: holiday.name })}</Notice>}
 
               {fulfillment === 'pickup' && (
                 <div role="radiogroup" aria-label={t('checkout.pickupBranch')} className="mt-5 space-y-2">

@@ -61,9 +61,11 @@
     "rates": {
       "standard": 18000,
       "reduced": 7000,
-      "prepared": 18000
+      "prepared": 4000
     },
-    "disclosure": "Lei 12.741/2012: valor aproximado dos tributos"
+    "disclosure": "Lei 12.741/2012: valor aproximado dos tributos",
+    "basis": "price",
+    "basisNote": "ICMS is calculated \"por dentro\": the rate applies to the price that already contains it. Prepared meals use the optional regime especial for bars and restaurants, 4% of gross revenue (Decreto SP 51.597/2007 as amended by Decreto 69.314/2025, in force until 31/12/2026); outside it, 12% (RICMS/SP art. 54, XII). 18% is the modal rate for goods (Lei 6.374/1989 art. 34)."
   },
   "tip": {
     "mode": "optional",
@@ -97,7 +99,10 @@
     "https://cldr.unicode.org (pt_BR)",
     "https://portal.fazenda.sp.gov.br (ICMS SP, NFC-e)",
     "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2012/lei/l12741.htm",
-    "https://www.gov.br/anpd (LGPD)"
+    "https://www.gov.br/anpd (LGPD)",
+    "https://legislacao.fazenda.sp.gov.br/Paginas/Decreto-69314-de-2025.aspx (regime especial de refeições, 4%)",
+    "https://legislacao.fazenda.sp.gov.br/Paginas/lei034.aspx (alíquota modal 18%)",
+    "https://www.gov.br (Lei 662/1949, Lei 14.759/2023; feriados municipais e estaduais de SP)"
   ],
   "revenue": {
     "commission": 15000
@@ -108,5 +113,59 @@
     "Pedro Lima",
     "Beatriz Alves",
     "Rafael Costa"
+  ],
+  "holidays": [
+    {
+      "date": "2026-01-01",
+      "name": "Confraternização Universal"
+    },
+    {
+      "date": "2026-01-25",
+      "name": "Aniversário de São Paulo"
+    },
+    {
+      "date": "2026-04-03",
+      "name": "Sexta-feira Santa"
+    },
+    {
+      "date": "2026-04-21",
+      "name": "Tiradentes"
+    },
+    {
+      "date": "2026-05-01",
+      "name": "Dia do Trabalhador"
+    },
+    {
+      "date": "2026-06-04",
+      "name": "Corpus Christi"
+    },
+    {
+      "date": "2026-07-09",
+      "name": "Revolução Constitucionalista"
+    },
+    {
+      "date": "2026-09-07",
+      "name": "Independência do Brasil"
+    },
+    {
+      "date": "2026-10-12",
+      "name": "Nossa Senhora Aparecida"
+    },
+    {
+      "date": "2026-11-02",
+      "name": "Finados"
+    },
+    {
+      "date": "2026-11-15",
+      "name": "Proclamação da República"
+    },
+    {
+      "date": "2026-11-20",
+      "name": "Dia Nacional de Zumbi e da Consciência Negra"
+    },
+    {
+      "date": "2026-12-25",
+      "name": "Natal"
+    }
   ]
 }

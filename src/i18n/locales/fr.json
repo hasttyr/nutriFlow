@@ -610,5 +610,6 @@
   "orders.paymentFailed": "Le paiement a été refusé et la commande annulée.",
   "merchant.paymentPending": "En attente de la confirmation du paiement.",
   "admin.monitor.online": "en ligne",
-  "admin.monitor.offline": "en panne"
+  "admin.monitor.offline": "en panne",
+  "checkout.holiday": "Aujourd’hui est un jour férié ({name}). Le commerce peut mettre plus de temps ou changer ses horaires."
 }

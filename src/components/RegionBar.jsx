@@ -1,5 +1,6 @@
 import { Crosshair, LoaderCircle, MapPin } from 'lucide-react';
-import { locatePrecisely, useRegion } from '../geo/region';
+import { activeProfile, locatePrecisely, useRegion } from '../geo/region';
+import { formatDistance } from '../region/distance';
 import { useLocale } from '../i18n/useLocale';
 import Glass from '../ui/Glass';
 import { countryName } from '../region/profiles';
@@ -23,7 +24,7 @@ const RegionBar = () => {
           {location && (
             <p className="text-sm text-ink/70">
               {t(`region.source.${location.source}`)}
-              {location.accuracy ? ` · ±${location.accuracy >= 1000 ? `${Math.round(location.accuracy / 1000)} km` : `${location.accuracy} m`}` : ''}
+              {location.accuracy ? ` · ±${formatDistance(location.accuracy, activeProfile(region), locale)}` : ''}
               {region.gpsError && ` · ${t(region.gpsError === 'denied' ? 'region.gpsDenied' : 'region.gpsFailed')}`}
             </p>
           )}

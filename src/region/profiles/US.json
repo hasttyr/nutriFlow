@@ -93,7 +93,8 @@
   "sources": [
     "https://cldr.unicode.org (en_US)",
     "https://www.tax.ny.gov/pubs_and_bulls/tg_bulletins/st/quick_reference_guide_for_taxable_and_exempt_property_and_services.htm",
-    "https://ag.ny.gov/resources/organizations/data-breach-reporting/shield-act"
+    "https://ag.ny.gov/resources/organizations/data-breach-reporting/shield-act",
+    "https://www.opm.gov/policy-data-oversight/pay-leave/federal-holidays/"
   ],
   "revenue": {
     "commission": 18000
@@ -104,5 +105,51 @@
     "Carlos Diaz",
     "Emily Brown",
     "Kevin Smith"
+  ],
+  "holidays": [
+    {
+      "date": "2026-01-01",
+      "name": "New Year's Day"
+    },
+    {
+      "date": "2026-01-19",
+      "name": "Martin Luther King Jr. Day"
+    },
+    {
+      "date": "2026-02-16",
+      "name": "Washington's Birthday"
+    },
+    {
+      "date": "2026-05-25",
+      "name": "Memorial Day"
+    },
+    {
+      "date": "2026-06-19",
+      "name": "Juneteenth"
+    },
+    {
+      "date": "2026-07-03",
+      "name": "Independence Day (observed)"
+    },
+    {
+      "date": "2026-09-07",
+      "name": "Labor Day"
+    },
+    {
+      "date": "2026-10-12",
+      "name": "Columbus Day"
+    },
+    {
+      "date": "2026-11-11",
+      "name": "Veterans Day"
+    },
+    {
+      "date": "2026-11-26",
+      "name": "Thanksgiving Day"
+    },
+    {
+      "date": "2026-12-25",
+      "name": "Christmas Day"
+    }
   ]
 }

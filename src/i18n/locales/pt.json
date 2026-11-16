@@ -610,5 +610,6 @@
   "orders.paymentFailed": "O pagamento foi recusado e o pedido foi cancelado.",
   "merchant.paymentPending": "Aguardando a confirmação do pagamento.",
   "admin.monitor.online": "online",
-  "admin.monitor.offline": "fora do ar"
+  "admin.monitor.offline": "fora do ar",
+  "checkout.holiday": "Hoje é feriado ({name}). A loja pode demorar mais ou abrir em outro horário."
 }

@@ -592,5 +592,6 @@
   "orders.paymentFailed": "支払いが拒否されたため、注文はキャンセルされました。",
   "merchant.paymentPending": "支払いの確認待ちです。",
   "admin.monitor.online": "稼働中",
-  "admin.monitor.offline": "停止"
+  "admin.monitor.offline": "停止",
+  "checkout.holiday": "本日は祝日です（{name}）。お店の営業時間や配達時間が通常と異なる場合があります。"
 }

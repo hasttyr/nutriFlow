@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { DEMO_NODES, setNodes } from '../distributed/cluster';
+import { formatDistance } from '../region/distance';
 import { DEFAULT_COUNTRY, isSupported, profileFor } from '../region/profiles';
 import { distanceMeters, locateByGps, locateByIp, locateByTimeZone, reverseGeocode, watchGps } from './location';
 import { findStores, kindCategories, kindLabel, storeCode } from './stores';
@@ -64,8 +65,6 @@ export const setCountry = (country) => {
   setState({ country, countryPinned: true });
 };
 
-const formatDistance = (meters) => (meters < 1000 ? `${meters} m` : `${(meters / 1000).toFixed(1)} km`);
-
 // A nearby store as a cluster node: latency grows with distance.
 export const toNode = (store) => {
   const label = kindLabel(store.kind);
@@ -74,7 +73,7 @@ export const toNode = (store) => {
     ...store,
     name,
     code: storeCode(name),
-    zone: Object.fromEntries(Object.entries(label).map(([locale, text]) => [locale, `${text} · ${formatDistance(store.distance)}`])),
+    zone: Object.fromEntries(Object.entries(label).map(([locale, text]) => [locale, `${text} · ${formatDistance(store.distance, activeProfile(), locale)}`])),
     categories: kindCategories(store.kind),
     baseLatency: Math.round(18 + store.distance / 35)
   };

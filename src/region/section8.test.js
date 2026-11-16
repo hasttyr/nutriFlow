@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createTranslator } from '../i18n/i18n';
 import { methodsFor } from '../payments/methods';
+import { formatDistance } from './distance';
+import { holidayOn } from './holidays';
 import { quote } from './money';
 import { listPrice, profileFor } from './profiles';
 
@@ -18,7 +20,7 @@ const expected = {
   },
   BR: {
     at: '2026-11-15T23:30:00Z', date: '15/11/2026', time: /^20:30:00$/, totalLabel: 'Total',
-    subtotal: 'R$ 65,80', delivery: 'R$ 7,99', tax: 'ICMS 18% · R$ 10,04 (incluido)', tip: 'R$ 6,58', total: 'R$ 80,37',
+    subtotal: 'R$ 65,80', delivery: 'R$ 7,99', tax: 'ICMS 4% · R$ 2,63 (incluido)', tip: 'R$ 6,58', total: 'R$ 80,37',
     receipt: 'NFC-e', payments: ['pix', 'card', 'boleto', 'cash'], tipMode: 'optional'
   },
   US: {
@@ -63,4 +65,20 @@ describe('section 8: the same order in the five countries', () => {
       expect(methodsFor(profile).map((method) => method.id)).toEqual(want.payments);
     });
   }
+});
+
+describe('holidays and distances, as data per country', () => {
+  it('knows the order of 15 November at 20:30 falls on a holiday only in Brazil', () => {
+    const holidays = Object.fromEntries(Object.entries(expected).map(([country, want]) => [country, holidayOn(Date.parse(want.at), profileFor(country))?.name ?? null]));
+    expect(holidays).toEqual({ CO: null, BR: 'Proclamação da República', US: null, FR: null, JP: null });
+    // The local date counts, not the UTC one: 20:30 in Bogotá is already 16 Nov in UTC, a Colombian holiday.
+    expect(holidayOn(Date.parse('2026-11-16T01:30:00Z'), profileFor('CO'))).toBeNull();
+  });
+
+  it('shows distances in miles in the United States and in kilometres elsewhere, through Intl', () => {
+    expect(plain(formatDistance(1200, profileFor('CO')))).toBe('1,2 km');
+    expect(plain(formatDistance(805, profileFor('US')))).toBe('0.5 mi');
+    expect(plain(formatDistance(30, profileFor('US')))).toBe('98 ft');
+    expect(plain(formatDistance(850, profileFor('FR')))).toBe('850 m');
+  });
 });

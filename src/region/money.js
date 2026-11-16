@@ -40,7 +40,10 @@ export const quote = (lines, { fulfillment, tipPercent }, profile) => {
     .filter(([category]) => tax.rates[category] > 0)
     .map(([category, base]) => {
       const rate = tax.rates[category];
-      const amount = Math.round(tax.includedInPrice ? (base * rate) / (tax.rateScale + rate) : (base * rate) / tax.rateScale);
+      // VAT style: the rate is on the price before tax. basis 'price' (Brazil's ICMS "por dentro"):
+      // the rate is on the price that already contains the tax.
+      const onNet = tax.includedInPrice && tax.basis !== 'price';
+      const amount = Math.round(onNet ? (base * rate) / (tax.rateScale + rate) : (base * rate) / tax.rateScale);
       return { name: (category === 'prepared' && tax.preparedName) || tax.name, rate: rate / tax.rateScale, amount };
     });
   const tipAmount = tip.mode === 'none' ? 0 : Math.round((subtotal * (tipPercent ?? tip.defaultPercent)) / 100);
