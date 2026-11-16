@@ -81,6 +81,12 @@ export const rate = (order, rating) => (order.status === 'delivered' && !order.r
 // The payment service answered: the charge went through, or it failed and the order is undone.
 export const paymentResult = (order, approved) => {
   if (order.payment.status !== 'pending') return null;
+  // Cancelled while the charge was in flight: the money comes straight back (compensation).
+  if (order.status === 'cancelled') {
+    return approved
+      ? { ...order, refund: { amount: order.totals.total, at: now() }, payment: { ...order.payment, status: 'refunded' } }
+      : { ...order, payment: { ...order.payment, status: 'failed' } };
+  }
   if (approved) return { ...order, payment: { ...order.payment, status: 'captured' } };
   return step(order, 'cancelled', { reason: 'paymentFailed', payment: { ...order.payment, status: 'failed' } });
 };

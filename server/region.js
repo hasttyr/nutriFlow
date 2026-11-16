@@ -158,7 +158,12 @@ const routes = [
   ['POST', /^\/orders$/, async ({ body, req }) => {
     requireRole(req, 'customer');
     const input = parseOrder(body);
+    const same = (a, b) => JSON.stringify([a.nodeId, a.customer, a.lines]) === JSON.stringify([b.nodeId, b.customer, b.lines]);
+    let repeated = null;
     const order = transaction(db, () => {
+      // The same order sent again (a retry after a timeout or a failover) gets the one already stored.
+      const existing = readOrder(input.id);
+      if (existing && same(existing, input)) return (repeated = existing);
       // A duplicate number (two devices, same counter) gets a suffix instead of overwriting.
       let id = input.id;
       while (readOrder(id)) id = `${input.id}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
@@ -166,6 +171,7 @@ const routes = [
       writeOrder(created);
       return created;
     });
+    if (repeated) return { status: 200, body: { id: order.id, order } };
     await bus.publish(`${base}/events`, { previous: null, order });
     if (order.payment.status === 'pending') {
       await bus.publish(`${base}/payments/request`, { orderId: order.id, amount: order.totals.total, currency: profile().currency, method: order.payment.id, token: order.payment.token });

@@ -129,6 +129,34 @@ describe('failures', () => {
     assert.equal((await request(CO_1, 'merchant', `/orders/${created.id}/accept`, { body: {} })).body.status, 'accepted');
   });
 
+  it('an order cancelled while its payment is pending is refunded when the charge goes through', async () => {
+    send('stop payments');
+    await wait(400);
+    const created = await place(CO_1);
+    const cancelled = await request(CO_1, 'customer', `/orders/${created.id}/cancel`, { body: {} });
+    assert.equal(cancelled.body.status, 'cancelled');
+    assert.equal(cancelled.body.payment.status, 'pending');
+
+    send('start payments');
+    const done = await until(async () => {
+      const current = await read(created.id);
+      return current.payment.status === 'refunded' && current;
+    });
+    assert.equal(done.status, 'cancelled');
+    assert.equal(done.refund.amount, created.totals.total);
+  });
+
+  it('the same order sent again after a failover is not created twice', async () => {
+    const body = order({ id: 'NF-CO-54321', payment: { id: 'cash' } });
+    const first = await request(CO_1, 'customer', '/orders', { body });
+    assert.equal(first.status, 201);
+    const retry = await request(CO_2, 'customer', '/orders', { body });
+    assert.equal(retry.status, 200);
+    assert.equal(retry.body.id, first.body.id);
+    const other = await request(CO_1, 'customer', '/orders', { body: { ...body, lines: [{ id: 66, quantity: 1 }] } });
+    assert.notEqual(other.body.id, first.body.id, 'a different order with the same number still gets its own id');
+  });
+
   it('a declined payment undoes the order (compensation)', async () => {
     const created = await place(CO_1, order({ payment: { id: 'card', last4: '0002', token: 'tok_test_0002' } }));
     const done = await until(async () => {
