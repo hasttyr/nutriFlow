@@ -5,6 +5,7 @@
 <p>Facultad de Ingeniería y Ciencias Básicas, Universidad Central<br>Ingeniería de Sistemas y Computación</p>
 <p>Sistemas Distribuidos: Proyecto de asignatura, diseño de un sistema distribuido</p>
 <p>Noviembre de 2026</p>
+<p>Repositorio: <a href="https://github.com/hasttyr/nutriFlow">github.com/hasttyr/nutriFlow</a></p>
 </div>
 
 ## 1. La oportunidad de negocio
@@ -397,7 +398,7 @@ Usamos routers de borde redundantes con dos proveedores de internet, firewalls d
 
 ## 8. Prototipo y pruebas
 
-El prototipo tiene cinco regiones, una por país, cada una con su propia base de datos, más una segunda instancia de Colombia, el intermediario de mensajes y los servicios de Pagos, Logística y Notificaciones. Con la app web son once procesos independientes que se comunican por red. Las cinco regiones ejecutan el mismo código y lo que cambia entre ellas es el perfil de cada país. Se levanta con Docker Compose, un contenedor por proceso (`npm run demo`), o como procesos de Node sin Docker (`npm run demo:local`). Cada ventana de la app se conecta solo a la región de su país, y la cabecera muestra la instancia que la atiende. Los datos de prueba son ficticios.
+El prototipo tiene cinco regiones, una por país, cada una con su propia base de datos, más una segunda instancia de Colombia, el intermediario de mensajes y los servicios de Pagos, Logística y Notificaciones. Con la app web son once procesos independientes que se comunican por red. Las cinco regiones ejecutan el mismo código y lo que cambia entre ellas es el perfil de cada país. Se levanta con Docker Compose, un contenedor por proceso (`npm run demo`), o como procesos de Node sin Docker (`npm run demo:local`). Cada ventana de la app se conecta solo a la región de su país, y la cabecera muestra la instancia que la atiende. Los datos de prueba son ficticios. El código, la guía de despliegue y las pruebas están en el repositorio público [github.com/hasttyr/nutriFlow](https://github.com/hasttyr/nutriFlow).
 
 Hay dos formas de verlo. La plataforma distribuida es la que se levanta localmente con procesos o contenedores, y es la que se usa en la demostración y en las pruebas de falla. La versión publicada en Vercel es un modo de navegador que simula los nodos dentro de la página: sirve para recorrer la interfaz desde cualquier teléfono, pero no es el sistema distribuido.
 
@@ -900,7 +901,7 @@ Todas son de código abierto. La pasarela de pagos, la mensajería y la autorida
 | 7.4 | Flujo completo del pedido en cada país | Catálogo, carrito, pago simulado, asignación, seguimiento, entrega, calificación y comprobante |
 | 7.5 | Pruebas de falla | Doce pruebas automáticas que detienen procesos de forma intencional (Anexo D.1) |
 | 7.6 | Pruebas de localización | El caso de la sección 9 verificado en los cinco países |
-| 7.7 | Repositorio, instrucciones y datos de prueba | Repositorio con historial, guía de despliegue y datos ficticios |
+| 7.7 | Repositorio, instrucciones y datos de prueba | [github.com/hasttyr/nutriFlow](https://github.com/hasttyr/nutriFlow): historial, guía de despliegue (`README.md`, `DEPLOY.md`) y datos ficticios |
 
 ## Anexo E. Fuentes y declaración de uso de IA
 
