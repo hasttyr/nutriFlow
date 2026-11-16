@@ -10,11 +10,11 @@
   <a href="https://github.com/hasttyr/nutriFlow">github.com/hasttyr/nutriFlow</a>
 </p>
 
-nutriFlow helps you do your groceries ("hacer mercado") wherever you are: it finds the real stores around you, plans your week's meals with a free AI, builds the shopping list, and tells you which nearby store is cheapest. It is the Práctica IV project for the Distributed Systems (SD) course, so the app **looks and behaves like a distributed system**: every nearby store is a node of a cluster simulated in the browser. It runs on its own in the browser, or against the real backend in `server/` (see Backend).
+nutriFlow te ayuda a hacer mercado donde estés. Encuentra las tiendas reales que tienes cerca, arma el menú de la semana con una IA gratuita, saca la lista de compras y te dice qué tienda cercana te sale más barata. Es el proyecto de la Práctica IV de Sistemas Distribuidos, así que la app se ve y se comporta como un sistema distribuido: cada tienda cercana es un nodo de un clúster simulado en el navegador. Funciona sola en el navegador o conectada al backend real de `server/` (ver Backend).
 
-## Run and test
+## Cómo correrlo y probarlo
 
-You need **Node.js 24**, plus **Docker Desktop** for option A. Clone the repository and install the dependencies once:
+Necesitas **Node.js 24**. Para la opción A también necesitas **Docker Desktop**. Clona el repositorio e instala las dependencias una vez:
 
 ```bash
 git clone https://github.com/hasttyr/nutriFlow.git
@@ -22,178 +22,184 @@ cd nutriFlow
 npm install
 ```
 
-### Option A: Docker (the demo setup)
+### Opción A: Docker (la de la demostración)
 
 ```bash
 npm run demo
 ```
 
-This builds one image, starts 11 containers (broker, five regions, Colombia's replica `co-2`, payments, logistics, notifications and the web app), and waits until every one of them answers. Then open http://localhost:4173/login in four tabs and sign in as **admin first**, then customer, store and courier. The admin console hears all five regions and runs the autopilot.
+Este comando construye una imagen y levanta 11 contenedores: el intermediario, las cinco regiones, la réplica de Colombia `co-2`, pagos, logística, notificaciones y la app web. Luego espera a que todos respondan. Cuando estén listos, abre http://localhost:4173/login en cuatro pestañas. Entra **primero como administrador** y después como cliente, tienda y repartidor. El administrador oye las cinco regiones y es el que mueve el piloto automático.
 
-Type commands in the same terminal:
+En la misma terminal puedes escribir:
 
-| Command | What it does |
+| Comando | Qué hace |
 | --- | --- |
-| `ps` | List the containers and their state |
-| `kill <name>` | Crash a container: `kill payments`, `kill co-1`, `kill logistics`… |
-| `start <name>` | Bring it back |
-| `logs <name>` | Show its last lines |
-| `quit` or Ctrl+C | Take every container down (the volumes keep the orders) |
+| `ps` | Lista los contenedores y su estado |
+| `kill <nombre>` | Tumba un contenedor: `kill payments`, `kill co-1`, `kill logistics`… |
+| `start <nombre>` | Lo vuelve a prender |
+| `logs <nombre>` | Muestra sus últimas líneas |
+| `quit` o Ctrl+C | Baja todos los contenedores (los volúmenes guardan los pedidos) |
 
-After `kill co-1`, the badge in a Colombia tab's header changes from **co-1** (green) to **co-2** (amber) within a few seconds. The same setup also runs without the script: `docker compose up --build`.
+Después de `kill co-1`, el indicador en la cabecera de una pestaña de Colombia pasa de **co-1** (verde) a **co-2** (ámbar) en unos segundos. Si prefieres no usar el script, `docker compose up --build` levanta lo mismo.
 
-If Docker Desktop never reaches "Engine running", turn on virtualization in the BIOS (AMD: SVM Mode, Intel: VT-x).
+Si Docker Desktop nunca llega a "Engine running", activa la virtualización en la BIOS (AMD: SVM Mode, Intel: VT-x).
 
-### Option B: native (Node only, no Docker)
+### Opción B: nativo (solo Node, sin Docker)
 
 ```bash
 npm run demo:local
 ```
 
-This starts the same processes with Node in one terminal, and the web app runs on http://localhost:5173. The commands are `ps`, `stop <name>`, `start <name>`, `restart <name>` and `quit`. To keep the web app's logs apart, use two terminals: `npm run backend` and `npm run dev:live`.
+Levanta los mismos procesos con Node en una sola terminal, y la app web queda en http://localhost:5173. Los comandos son `ps`, `stop <nombre>`, `start <nombre>`, `restart <nombre>` y `quit`. Si quieres ver los logs de la app aparte, usa dos terminales: `npm run backend` y `npm run dev:live`.
 
-### Browser-only mode
+### Solo navegador
 
-`npm run dev` (http://localhost:5173) runs the app with the cluster simulated in the browser. It needs no backend and is the same version that is deployed on Vercel.
+`npm run dev` (http://localhost:5173) corre la app con el clúster simulado en el navegador. No necesita backend y es la misma versión publicada en Vercel.
 
-### Tests
+### Pruebas
 
-| Command | What it checks |
+| Comando | Qué revisa |
 | --- | --- |
-| `npm test` | The app's 113 Vitest tests, including the section 9 case in all five countries |
-| `npm run test:backend` | 12 failure tests that start the real processes and crash them on purpose (about 10 s, no Docker needed) |
+| `npm test` | Las 113 pruebas de la app con Vitest, incluido el caso de la sección 9 en los cinco países |
+| `npm run test:backend` | 12 pruebas de falla que levantan los procesos reales y los tumban a propósito (unos 10 s, sin Docker) |
 | `npm run lint` | ESLint |
-| `npm run check` | Lint, tests and the production build: run it before pushing |
+| `npm run check` | Lint, pruebas y build de producción. Córrelo antes de hacer push |
 
-## Course report
+## Informe del curso
 
-The technical report (in Spanish) is [`docs/pdf/informe.pdf`](docs/pdf/informe.pdf), built from [`informe.md`](informe.md). To rebuild it, run `node docs/pdf/build.mjs`, which writes `docs/pdf/informe.html` (tables and mermaid diagrams, APA style), and print that page to PDF from a browser: Letter size, 2.54 cm margins. `docs/pdf/measure.js` is a Playwright snippet that prints the PDF and counts the body pages, which the course limits to 20.
+El informe técnico es [`docs/pdf/informe.pdf`](docs/pdf/informe.pdf) y sale de [`informe.md`](informe.md). Para regenerarlo, corre `node docs/pdf/build.mjs`, que escribe `docs/pdf/informe.html` con tablas y diagramas mermaid en formato APA. Luego imprime esa página a PDF desde un navegador, en tamaño carta con márgenes de 2.54 cm. `docs/pdf/measure.js` es un fragmento de Playwright que imprime el PDF y cuenta las páginas del cuerpo, que el curso limita a 20.
 
-## Features
+## Funciones
 
-- **Location, most precise method first**: device GPS (with permission) → IP lookup → time zone → a point picked on the map. City and country come from reverse geocoding.
-- **Store map** (`/map`): real supermarkets, greengrocers, butchers, bakeries and markets near you from OpenStreetMap (Nominatim, with Overpass as backup, cached per area). Tap a store to see what it sells. Store names and positions are real; products, prices and stock are simulated, and each kind of store sells only its categories (a greengrocer has no coffee). If OpenStreetMap does not answer, clearly labelled demo stores appear around you.
-- **Five countries, configured as data** (Colombia, Brazil, United States, France, Japan): each one is a `RegionProfile` JSON in `src/region/profiles/` (language, CLDR locale, currency and its decimals, time zone, 12/24 h clock, phone and postal-code formats, name order, delivery fee, tax, tip, receipt type, fiscal IDs, payment methods, data-protection law) plus its own price list in `src/region/prices/`. There are no per-country branches in the code: adding a sixth country means adding those two files.
-- **Money as integers**: every amount is an integer in the minor unit of the local currency (centavos, cents, yen). COP and JPY are quoted without decimals, so their minor unit is the whole peso or yen. Intl (CLDR) formats them per country: `$ 25.900`, `R$ 25,90`, `$25.90`, `25,90 €`, `￥2,590`.
-- **Weekly planner** (`/planner`): write what you want to eat ("healthy, little red meat, cheap"); a free AI (Pollinations) returns a 7-day menu and a shopping list made only of products sold nearby, favouring typical dishes of your country. Every nearby store then quotes the basket in parallel (scatter-gather): cheapest complete store, best split across stores, and one tap to buy or move it to your list. If the AI does not answer, a rule-based planner (diet keywords in all five languages) builds the plan.
-- **Multi-device by link/QR**: the list and the plan are compressed into the URL fragment (`/share#…`) and shown as a QR code; open it on another device and import it. No server stores anything.
-- **Local products**: the 65-product catalog has diet tags (vegan, vegetarian, gluten, protein) and the countries where each product is typical; the home page shows the ones from your area.
-- **Catalog** with search (accent-insensitive, in any of the five languages) and categories.
-- **Shopping list**: plan, check off what you already have, and move what is missing to the cart.
-- **Compare branches**: every branch answers with its own price and stock, each at its own latency.
-- **Delivery or pickup**, paid on delivery (demo: nothing is charged).
-- **System status** (`/status`): node health, latency, inventory version, requests, failures, a live call log, and controls to make any node slow or bring it down.
-- **Account screens (demo, not functional)**: `/login`, `/register` and `/profile` (orders, addresses, preferences and a session replicated across the nodes). Any details "log in" and open the same demo profile.
-- **Control views**: a 404 page for unknown routes and a 500 page at `/500`, which also replaces any screen that crashes while rendering.
-- **Five languages** (Spanish, Portuguese, English, French, Japanese), one JSON resource catalog per language in `src/i18n/locales/` with stable keys and English fallback. The language follows the country; a language picked by hand is remembered for that country. Numbers, money, dates and times always follow the country's profile. Japanese uses CJK fonts and strict line breaking. Liquid-glass UI built 100% with Tailwind, mobile-first.
+- **Ubicación, del método más preciso al menos preciso**: GPS del dispositivo (con permiso), luego la IP, luego la zona horaria y por último un punto elegido en el mapa. La ciudad y el país salen de geocodificación inversa.
+- **Mapa de tiendas** (`/map`): supermercados, fruterías, carnicerías, panaderías y plazas reales cerca de ti, sacados de OpenStreetMap (Nominatim, con Overpass de respaldo y caché por zona). Al tocar una tienda ves lo que vende. Los nombres y las posiciones son reales; los productos, precios y existencias son simulados, y cada tipo de tienda vende solo lo suyo (una frutería no vende café). Si OpenStreetMap no responde, aparecen tiendas de demostración marcadas como tal.
+- **Cinco países configurados como datos** (Colombia, Brasil, Estados Unidos, Francia y Japón). Cada uno es un JSON `RegionProfile` en `src/region/profiles/` con idioma, locale CLDR, moneda y sus decimales, zona horaria, reloj de 12 o 24 h, formatos de teléfono y código postal, orden del nombre, domicilio, impuesto, propina, tipo de comprobante, identificaciones fiscales, medios de pago y ley de datos personales. Además tiene su propia lista de precios en `src/region/prices/`. El código no tiene condicionales por país: agregar un sexto país es agregar esos dos archivos.
+- **Dinero en enteros**: todo valor es un entero en la unidad menor de la moneda local (centavos o yenes). El COP y el JPY se cotizan sin decimales, así que su unidad menor es el peso o el yen. Intl (CLDR) les da formato según el país: `$ 25.900`, `R$ 25,90`, `$25.90`, `25,90 €`, `￥2,590`.
+- **Planificador semanal** (`/planner`): escribes lo que quieres comer ("sano, poca carne roja, barato") y una IA gratuita (Pollinations) devuelve un menú de 7 días y una lista con productos que se venden cerca, con preferencia por platos típicos de tu país. Después todas las tiendas cercanas cotizan la canasta en paralelo (scatter-gather): verás la tienda más barata con todo, la mejor combinación entre tiendas y un botón para comprar o pasarlo a tu lista. Si la IA no responde, un planificador por reglas arma el menú con palabras clave de dieta en los cinco idiomas.
+- **Varios dispositivos con enlace o QR**: la lista y el plan viajan comprimidos en el fragmento de la URL (`/share#…`) y se muestran como QR. Lo abres en otro dispositivo y lo importas. Ningún servidor guarda nada.
+- **Productos locales**: el catálogo de 65 productos tiene etiquetas de dieta (vegano, vegetariano, gluten, proteína) y los países donde cada producto es típico. La página de inicio muestra los de tu zona.
+- **Catálogo** con búsqueda en cualquiera de los cinco idiomas, sin importar las tildes, y con categorías.
+- **Lista de compras**: planeas, marcas lo que ya tienes y pasas lo que falta al carrito.
+- **Comparar sucursales**: cada sucursal responde con su propio precio y sus existencias, cada una con su latencia.
+- **Domicilio o recoger en tienda**, con pago contra entrega (es una demo, no se cobra nada).
+- **Estado del sistema** (`/status`): salud de los nodos, latencia, versión del inventario, peticiones, fallas, un registro de llamadas en vivo y controles para volver lento o tumbar cualquier nodo.
+- **Pantallas de cuenta (demo, no funcionales)**: `/login`, `/register` y `/profile`, con pedidos, direcciones, preferencias y una sesión replicada en los nodos. Cualquier dato sirve para "entrar", y siempre abre el mismo perfil de demostración.
+- **Páginas de control**: una página 404 para rutas que no existen y una 500 en `/500`, que también reemplaza cualquier pantalla que se rompa al dibujarse.
+- **Cinco idiomas** (español, portugués, inglés, francés y japonés), con un catálogo JSON por idioma en `src/i18n/locales/`, claves estables y respaldo en inglés. El idioma sigue al país, y si eliges uno a mano se recuerda para ese país. Los números, el dinero, las fechas y las horas siempre siguen el perfil del país. El japonés usa fuentes CJK y corte de línea estricto. La interfaz es de vidrio líquido, hecha 100 % con Tailwind y pensada primero para el teléfono.
 
-## The four apps, live
+## Las cuatro apps, en vivo
 
-The platform serves four actors, each with its own app. Sign in at `/login` and pick the role; every browser tab keeps its own session, so the four apps can run side by side:
+La plataforma atiende a cuatro actores, cada uno con su app. Entra en `/login` y elige el rol. Cada pestaña guarda su propia sesión, así que puedes tener las cuatro apps abiertas al mismo tiempo:
 
-| Route | Actor | What it does |
+| Ruta | Actor | Qué hace |
 | --- | --- | --- |
-| `/checkout` → `/orders/:id` | Customer | Order, then follow it live: map with store, courier and door; timeline in local time; cancel with refund; rate store and courier; the country's receipt |
-| `/merchant` | Store | Incoming orders by stage: accept or reject, mark ready, hand over pickups |
-| `/courier` | Courier | Go online/offline, pick up and deliver; the fleet with each courier's load |
-| `/admin` | Admin | Sales per country consolidated in USD (exchange rates with source and date), platform revenue, regional profiles editable as data (tax rates, delivery fee, tip, commission), monitoring and an autopilot |
-| `/notifications` | Everyone | Each actor's inbox, in their language and time zone |
+| `/checkout` → `/orders/:id` | Cliente | Pide y sigue el pedido en vivo: mapa con tienda, repartidor y puerta, línea de tiempo en hora local, cancelación con reembolso, calificación de tienda y repartidor, y el comprobante del país |
+| `/merchant` | Tienda | Pedidos por etapa: aceptar o rechazar, marcar listo y entregar los de recoger en tienda |
+| `/courier` | Repartidor | Conectarse o desconectarse, recoger y entregar, y ver la flota con la carga de cada repartidor |
+| `/admin` | Administrador | Ventas por país consolidadas en USD (con fuente y fecha de la tasa de cambio), ingresos de la plataforma, perfiles regionales editables como datos (impuestos, domicilio, propina, comisión), monitoreo y piloto automático |
+| `/notifications` | Todos | La bandeja de cada actor, en su idioma y su zona horaria |
 
-**How the tabs talk:** the shared state (`src/live/store.js`) lives in `localStorage`, every tab hears the others' writes through the `storage` event, and writes are serialised across tabs with the Web Locks API (a real mutex between processes). Couriers are assigned by proximity and availability with load balancing (`pickCourier`: distance × (1 + deliveries in progress), at most 2 at a time). The autopilot runs only in the tab that holds the leader lock; when that tab closes, the next one in line takes over (leader election with failover).
+**Cómo se hablan las pestañas:** el estado compartido (`src/live/store.js`) vive en `localStorage`. Cada pestaña oye lo que escriben las demás con el evento `storage`, y las escrituras se hacen una a la vez con la API Web Locks, que es un mutex real entre procesos. Los repartidores se asignan por cercanía y disponibilidad, con balanceo de carga: `pickCourier` usa distancia × (1 + entregas en curso) y permite máximo 2 a la vez. El piloto automático corre solo en la pestaña que tiene el candado de líder. Cuando esa pestaña se cierra, la siguiente en la fila toma el relevo (elección de líder con conmutación).
 
-Demo: open `/orders/<id>` in one tab, `/merchant` and `/courier` in two others, and watch the order move; or turn on the autopilot in `/admin`.
+Demo: abre `/orders/<id>` en una pestaña y `/merchant` y `/courier` en otras dos, y mira cómo avanza el pedido. También puedes prender el piloto automático en `/admin`.
 
-## Backend (live mode)
+## Backend (modo en vivo)
 
-The same web app runs against real regional servers (see [Run and test](#run-and-test) for how to start them). In live mode each tab connects only to its own country's region, and the header names the instance serving it. The admin console follows all five regions. Every subsystem is a Node process with SQLite built into Node. On Docker each process gets its own container from a single image, and each region gets its own volume.
+La misma app web funciona contra servidores regionales reales (en [Cómo correrlo y probarlo](#cómo-correrlo-y-probarlo) está cómo levantarlos). En modo en vivo cada pestaña se conecta solo a la región de su país, y la cabecera dice qué instancia la atiende. La consola de administración sigue a las cinco regiones. Cada subsistema es un proceso de Node con el SQLite que trae Node. En Docker, cada proceso tiene su propio contenedor a partir de una sola imagen, y cada región tiene su propio volumen.
 
-| Process | Port | Role |
+| Proceso | Puerto | Papel |
 | --- | --- | --- |
-| `broker` | tcp/1883 (MQTT) | Middleware: publish/subscribe, persistent queues (QoS 1), retained state, Last Will |
-| `co-1` `br-1` `us-1` `fr-1` `jp-1` | http/4101–4105 | Regional API, one per country, same code (`REGION=…`); owns its country's orders in its own SQLite file |
-| `co-2` | http/4111 | Replica of Colombia on the same data; the web app fails over to it |
-| `payments` | — | Payment gateway mock: idempotent charges and refunds |
-| `logistics` | — | Courier fleet, assignment by proximity/availability/load, live positions (QoS 0, once a second) |
-| `notifications` | — | One message per actor and step, rendered by each app in its own language and time zone |
+| `broker` | tcp/1883 (MQTT) | Middleware: publicación/suscripción, colas persistentes (QoS 1), estado retenido y Last Will |
+| `co-1` `br-1` `us-1` `fr-1` `jp-1` | http/4101–4105 | API regional, una por país y con el mismo código (`REGION=…`). Es dueña de los pedidos de su país, guardados en su propio archivo SQLite |
+| `co-2` | http/4111 | Réplica de Colombia sobre los mismos datos. La app web pasa a ella si cae `co-1` |
+| `payments` | — | Pasarela de pagos simulada: cobros y reembolsos idempotentes |
+| `logistics` | — | Flota de repartidores, asignación por cercanía, disponibilidad y carga, y posiciones en vivo (QoS 0, una por segundo) |
+| `notifications` | — | Un mensaje por actor y por paso, que cada app muestra en su idioma y su zona horaria |
 
-`server/directory.json` is the naming service (country → region URLs, primary first, then replicas). Order rules (`src/live/rules.js`), prices (`src/region/pricing.js`, `money.js`) and the country data are the same files the browser uses: one code base.
+`server/directory.json` es el servicio de nombres: país → URLs de la región, primero el primario y después las réplicas. Las reglas del pedido (`src/live/rules.js`), los precios (`src/region/pricing.js`, `money.js`) y los datos de los países son los mismos archivos que usa el navegador. Es un solo código.
 
-**How a command travels:** the browser sends it by HTTP to its country's region (`POST /orders/:id/accept`, with a signed role token); the region applies the rule in an ACID transaction on its SQLite file, publishes the change on the broker, and every interested process reacts (payments charges, logistics assigns, notifications writes). Each region pushes its live state back to the browsers with Server-Sent Events. Prices and totals are always recomputed by the region, never taken from the browser, and cards never leave the browser (the gateway gets a token).
+**Cómo viaja un comando:** el navegador lo manda por HTTP a la región de su país (`POST /orders/:id/accept`, con un token de rol firmado). La región aplica la regla en una transacción ACID sobre su archivo SQLite, publica el cambio en el intermediario, y cada proceso interesado reacciona: pagos cobra, logística asigna y notificaciones escribe. Cada región devuelve su estado en vivo a los navegadores con Server-Sent Events. Los precios y totales siempre los recalcula la región, nunca se toman del navegador, y la tarjeta nunca sale del navegador (la pasarela recibe un token).
 
-**Breaking it on purpose** (type in the `npm run backend` or `npm run demo:local` terminal; on Docker the same cases use `kill`): `ps`, `stop payments` / `start payments` (payments wait in the broker and go through when it is back), `stop co-1` (the replica takes over), `stop logistics` (orders wait for a courier and get one when it returns). The admin console's Monitoring tab shows each process going down and up. `npm run test:backend` runs these failure scenarios automatically against the real processes.
+**Para romperlo a propósito**, escribe en la terminal de `npm run backend` o `npm run demo:local` (en Docker, los mismos casos se hacen con `kill`):
+- `ps` lista los procesos.
+- `stop payments` / `start payments`: los pagos esperan en el intermediario y se completan cuando pagos vuelve.
+- `stop co-1`: la réplica toma el relevo.
+- `stop logistics`: los pedidos esperan repartidor y lo reciben cuando logística vuelve.
 
-## Simulated distributed system
+La pestaña de monitoreo de la consola de administración muestra cada proceso cuando cae y cuando vuelve. `npm run test:backend` corre estos casos de falla automáticamente contra los procesos reales.
 
-Everything lives in `src/distributed/`:
+## Sistema distribuido simulado
 
-| Concept | Where it shows |
+Todo está en `src/distributed/`:
+
+| Concepto | Dónde se ve |
 | --- | --- |
-| **Nodes**: the real stores near you (up to 12) join the cluster, latency grows with distance; the three Bogotá branches are the demo cluster until they load | Map, branch picker, `/status` |
-| **Membership change**: when you move, the old nodes leave and the new stores join | `/status` call log |
-| **Scatter-gather**: every store quotes the planner's basket in parallel | Planner budget |
-| **Network**: every call has latency and can fail (4 % transient failure rate) | "served by" badge, call log |
-| **Retries with exponential backoff** and a **circuit breaker** for nodes known to be down | Call log |
-| **Heartbeats** refresh each node's latency every 2 s | `/status`, branch picker |
-| **Failover reads**: if a branch does not answer, a replica serves its data | Products page ("served by the … replica") |
-| **Order saga**: route → reserve stock → register payment → create order → replicate → notify | Live order trace at checkout |
-| **Quorum replication**: each order is stored on the primary and its 2 closest replicas (factor 3, quorum 2), with **compensation** (stock is released if quorum fails) | Order confirmation / error |
-| **Delivery failover**: a down branch hands the order to the next one | Order confirmation |
+| **Nodos**: hasta 12 tiendas reales cercanas entran al clúster, y la latencia crece con la distancia. Mientras cargan, las tres sucursales de Bogotá son el clúster de demostración | Mapa, selector de sucursal, `/status` |
+| **Cambio de membresía**: cuando te mueves, los nodos viejos salen y entran las tiendas nuevas | Registro de llamadas en `/status` |
+| **Scatter-gather**: todas las tiendas cotizan en paralelo la canasta del planificador | Presupuesto del planificador |
+| **Red**: cada llamada tiene latencia y puede fallar (4 % de fallas transitorias) | Etiqueta "Atendido por", registro de llamadas |
+| **Reintentos con espera exponencial** y **cortacircuitos** para nodos que se sabe que están caídos | Registro de llamadas |
+| **Latidos** que refrescan la latencia de cada nodo cada 2 s | `/status`, selector de sucursal |
+| **Lecturas con conmutación**: si una sucursal no responde, una réplica entrega sus datos | Página de productos ("servidos por la réplica …") |
+| **Saga del pedido**: enrutar → reservar existencias → registrar pago → crear pedido → replicar → notificar | Traza del pedido en vivo en el checkout |
+| **Replicación por quórum**: cada pedido se guarda en el primario y en sus 2 réplicas más cercanas (factor 3, quórum 2), con **compensación** (las existencias se liberan si no hay quórum) | Confirmación o error del pedido |
+| **Conmutación del despacho**: una sucursal caída pasa el pedido a la siguiente | Confirmación del pedido |
 
-Try it: open `/status`, set Chapinero to **Down**, then browse products and place a delivery order.
+Pruébalo: abre `/status`, pon Chapinero en **Caída** y luego mira productos y haz un pedido a domicilio.
 
-## Requirements
+## Requisitos
 
-- Node.js 24 (React Router 8 needs Node ≥ 22.22)
+- Node.js 24 (React Router 8 necesita Node ≥ 22.22)
 
 ## Scripts
 
-| Command | Description |
+| Comando | Descripción |
 | --- | --- |
-| `npm run demo` | The whole platform on Docker, with failure commands |
-| `npm run demo:local` | The whole platform as Node processes, with failure commands |
-| `npm run backend` / `npm run dev:live` | The backend and the live web app, in two terminals |
-| `npm run test:backend` | The 12 failure tests against the real processes |
-| `npm run dev` | Start the Vite dev server (browser-only mode) |
-| `npm run build` | Production build into `dist/` |
-| `npm run preview` | Serve the production build locally |
-| `npm run lint` | Run ESLint |
-| `npm test` | Run the test suite once |
-| `npm run check` | Lint + tests + build (use before pushing) |
+| `npm run demo` | Toda la plataforma en Docker, con comandos para tumbar procesos |
+| `npm run demo:local` | Toda la plataforma como procesos de Node, con comandos para tumbar procesos |
+| `npm run backend` / `npm run dev:live` | El backend y la app web en vivo, en dos terminales |
+| `npm run test:backend` | Las 12 pruebas de falla contra los procesos reales |
+| `npm run dev` | Servidor de desarrollo de Vite (solo navegador) |
+| `npm run build` | Build de producción en `dist/` |
+| `npm run preview` | Sirve el build de producción en local |
+| `npm run lint` | Corre ESLint |
+| `npm test` | Corre las pruebas una vez |
+| `npm run check` | Lint, pruebas y build (córrelo antes de hacer push) |
 
-## Deployment
+## Despliegue
 
-Step-by-step guide (Vercel, local backend, Docker, failure demo, troubleshooting): [DEPLOY.md](DEPLOY.md).
+Guía paso a paso (Vercel, backend local, Docker, demostración de fallas y problemas comunes): [DEPLOY.md](DEPLOY.md).
 
-Pushing to `main` deploys on Vercel. `vercel.json` rewrites every route except `/api/*` to `index.html` so deep links such as `/products` work on reload.
+Cada push a `main` se despliega en Vercel. `vercel.json` redirige todas las rutas, menos `/api/*`, a `index.html`, para que enlaces como `/products` funcionen al recargar.
 
-### AI proxy
+### Proxy de la IA
 
-Pollinations rejects anonymous calls made from a browser (it asks for a Turnstile token) but answers server-to-server ones, so the planner calls `/api/ai`, a single Vercel Function (`api/ai.js`) that forwards only the chat messages. In development Vite's proxy does the same (`vite.config.js`). No key is needed; if you create one at enter.pollinations.ai, set `POLLINATIONS_KEY` in the Vercel project and the proxy uses it. The free model takes ~15–30 s and the anonymous tier allows **one reply every ~45 s per IP**, shared by every visitor because all calls leave from the proxy; the planner waits and retries once, and otherwise the rule-based planner answers. For a smoother demo, create a free key and set `POLLINATIONS_KEY`.
+Pollinations rechaza las llamadas anónimas que salen de un navegador (pide un token de Turnstile), pero sí responde las que van de servidor a servidor. Por eso el planificador llama a `/api/ai`, una función de Vercel (`api/ai.js`) que solo reenvía los mensajes del chat. En desarrollo, el proxy de Vite hace lo mismo (`vite.config.js`). No hace falta clave. Si creas una en enter.pollinations.ai, ponla en `POLLINATIONS_KEY` en el proyecto de Vercel y el proxy la usa. El modelo gratuito tarda entre 15 y 30 s, y el nivel anónimo permite **una respuesta cada ~45 s por IP**. Ese límite lo comparten todos los visitantes, porque todas las llamadas salen del proxy. El planificador espera y reintenta una vez; si no hay respuesta, contesta el planificador por reglas. Para que la demo vaya más fluida, crea una clave gratuita y configura `POLLINATIONS_KEY`.
 
-### External services (all free, no key)
+### Servicios externos (todos gratuitos y sin clave)
 
-| Service | Used for |
+| Servicio | Para qué se usa |
 | --- | --- |
-| get.geojs.io | Position from IP |
-| api.bigdatacloud.net (client endpoint) | City and country for a point |
-| nominatim.openstreetmap.org, Overpass mirrors | Nearby stores |
-| tile.openstreetmap.org | Map tiles (Leaflet) |
-| text.pollinations.ai (via `/api/ai`) | Weekly planner AI |
+| get.geojs.io | Posición a partir de la IP |
+| api.bigdatacloud.net (endpoint de cliente) | Ciudad y país de un punto |
+| nominatim.openstreetmap.org, espejos de Overpass | Tiendas cercanas |
+| tile.openstreetmap.org | Teselas del mapa (Leaflet) |
+| text.pollinations.ai (vía `/api/ai`) | IA del planificador semanal |
 
-## Application structure
+## Estructura de la aplicación
 
-- `src/distributed/` - simulated cluster (`cluster.js`, dynamic membership), store inventories (`inventory.js`), order saga (`orders.js`), React hooks (`hooks.js`)
-- `src/region/` - RegionProfiles (`profiles/*.json`), price lists (`prices/*.json`), the loader (`profiles.js`) and integer money helpers (`money.js`)
-- `src/geo/` - location (`location.js`), nearby stores (`stores.js`) and the region store that ties them together (`region.js`)
-- `src/planner/` - AI and rule-based weekly planner, basket pricing
-- `src/share/` - list/plan encoding for links and QR codes
-- `api/ai.js` - Vercel Function proxying the planner to Pollinations
-- `src/data/products.js` - catalog with base prices and icons
-- `src/cart/`, `src/list/` - cart and shopping list state (persisted in `localStorage`)
-- `src/i18n/` - translator and formatting (`i18n.js`), and one JSON catalog per language in `locales/`
-- `src/ui/` - liquid-glass primitives and shared Tailwind class sets
-- `src/components/`, `src/pages/` - layout and routes
+- `src/distributed/`: clúster simulado (`cluster.js`, membresía dinámica), inventarios de las tiendas (`inventory.js`), saga del pedido (`orders.js`) y hooks de React (`hooks.js`)
+- `src/region/`: perfiles regionales (`profiles/*.json`), listas de precios (`prices/*.json`), el cargador (`profiles.js`) y las funciones de dinero en enteros (`money.js`)
+- `src/geo/`: ubicación (`location.js`), tiendas cercanas (`stores.js`) y el estado de región que los une (`region.js`)
+- `src/planner/`: planificador semanal con IA y por reglas, y precio de la canasta
+- `src/share/`: codificación de la lista y el plan para enlaces y QR
+- `api/ai.js`: función de Vercel que hace de proxy del planificador hacia Pollinations
+- `src/data/products.js`: catálogo con precios base e íconos
+- `src/cart/`, `src/list/`: estado del carrito y de la lista de compras (guardado en `localStorage`)
+- `src/i18n/`: traductor y formatos (`i18n.js`), y un catálogo JSON por idioma en `locales/`
+- `src/ui/`: piezas base de vidrio líquido y conjuntos de clases de Tailwind compartidos
+- `src/components/`, `src/pages/`: estructura de la interfaz y rutas
 
-## Image credits
+## Créditos de imágenes
 
-`public/images/backdrop-produce.jpg` is StockSnap "Fruit Vegetables" (F8B73CPSBK), CC0 / public domain, found via [Openverse](https://openverse.org).
+`public/images/backdrop-produce.jpg` es "Fruit Vegetables" de StockSnap (F8B73CPSBK), CC0 / dominio público, encontrada en [Openverse](https://openverse.org).
