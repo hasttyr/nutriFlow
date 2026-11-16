@@ -1,6 +1,69 @@
-# nutriFlow
+<p align="center">
+  <img src="logo.png" alt="Universidad Central" width="260">
+</p>
+
+<h1 align="center">nutriFlow</h1>
+
+<p align="center">
+  Sistemas Distribuidos · Universidad Central · Ingeniería de Sistemas y Computación · 2026<br>
+  Nilson Aldair Molina Rengifo · Juan Fernando Cruz Cárdenas · Julián David Romero Baquero<br>
+  <a href="https://github.com/hasttyr/nutriFlow">github.com/hasttyr/nutriFlow</a>
+</p>
 
 nutriFlow helps you do your groceries ("hacer mercado") wherever you are: it finds the real stores around you, plans your week's meals with a free AI, builds the shopping list, and tells you which nearby store is cheapest. It is the Práctica IV project for the Distributed Systems (SD) course, so the app **looks and behaves like a distributed system**: every nearby store is a node of a cluster simulated in the browser. It runs on its own in the browser, or against the real backend in `server/` (see Backend).
+
+## Run and test
+
+You need **Node.js 24**, plus **Docker Desktop** for option A. Clone the repository and install the dependencies once:
+
+```bash
+git clone https://github.com/hasttyr/nutriFlow.git
+cd nutriFlow
+npm install
+```
+
+### Option A: Docker (the demo setup)
+
+```bash
+npm run demo
+```
+
+This builds one image, starts 11 containers (broker, five regions, Colombia's replica `co-2`, payments, logistics, notifications and the web app), and waits until every one of them answers. Then open http://localhost:4173/login in four tabs and sign in as **admin first**, then customer, store and courier. The admin console hears all five regions and runs the autopilot.
+
+Type commands in the same terminal:
+
+| Command | What it does |
+| --- | --- |
+| `ps` | List the containers and their state |
+| `kill <name>` | Crash a container: `kill payments`, `kill co-1`, `kill logistics`… |
+| `start <name>` | Bring it back |
+| `logs <name>` | Show its last lines |
+| `quit` or Ctrl+C | Take every container down (the volumes keep the orders) |
+
+After `kill co-1`, the badge in a Colombia tab's header changes from **co-1** (green) to **co-2** (amber) within a few seconds. The same setup also runs without the script: `docker compose up --build`.
+
+If Docker Desktop never reaches "Engine running", turn on virtualization in the BIOS (AMD: SVM Mode, Intel: VT-x).
+
+### Option B: native (Node only, no Docker)
+
+```bash
+npm run demo:local
+```
+
+This starts the same processes with Node in one terminal, and the web app runs on http://localhost:5173. The commands are `ps`, `stop <name>`, `start <name>`, `restart <name>` and `quit`. To keep the web app's logs apart, use two terminals: `npm run backend` and `npm run dev:live`.
+
+### Browser-only mode
+
+`npm run dev` (http://localhost:5173) runs the app with the cluster simulated in the browser. It needs no backend and is the same version that is deployed on Vercel.
+
+### Tests
+
+| Command | What it checks |
+| --- | --- |
+| `npm test` | The app's 113 Vitest tests, including the section 9 case in all five countries |
+| `npm run test:backend` | 12 failure tests that start the real processes and crash them on purpose (about 10 s, no Docker needed) |
+| `npm run lint` | ESLint |
+| `npm run check` | Lint, tests and the production build: run it before pushing |
 
 ## Course report
 
@@ -42,14 +105,7 @@ Demo: open `/orders/<id>` in one tab, `/merchant` and `/courier` in two others, 
 
 ## Backend (live mode)
 
-The same web app runs against real regional servers. `npm run demo` runs the whole platform on Docker (one container per process, web app on http://localhost:4173) and takes failure commands (`kill co-1`, `start co-1`, `ps`, `quit`). Without Docker, `npm run demo:local` starts the same processes with Node in one terminal (web app on http://localhost:5173). In live mode each tab connects only to its own country's region and the header names the instance serving it; the admin console follows all five. To keep the web app's logs apart, use two terminals:
-
-```bash
-npm run backend      # broker + 5 regional APIs (+ Colombia's replica) + payments, logistics, notifications
-npm run dev:live     # the web app talking to them (http://localhost:5173)
-```
-
-No Docker needed for development: every subsystem is a Node process on this machine, with SQLite built into Node. For the delivery, `npm run demo` (or `docker compose up --build`) runs the same processes as containers (one image, one container per process, one volume per region).
+The same web app runs against real regional servers (see [Run and test](#run-and-test) for how to start them). In live mode each tab connects only to its own country's region, and the header names the instance serving it. The admin console follows all five regions. Every subsystem is a Node process with SQLite built into Node. On Docker each process gets its own container from a single image, and each region gets its own volume.
 
 | Process | Port | Role |
 | --- | --- | --- |
@@ -64,7 +120,7 @@ No Docker needed for development: every subsystem is a Node process on this mach
 
 **How a command travels:** the browser sends it by HTTP to its country's region (`POST /orders/:id/accept`, with a signed role token); the region applies the rule in an ACID transaction on its SQLite file, publishes the change on the broker, and every interested process reacts (payments charges, logistics assigns, notifications writes). Each region pushes its live state back to the browsers with Server-Sent Events. Prices and totals are always recomputed by the region, never taken from the browser, and cards never leave the browser (the gateway gets a token).
 
-**Breaking it on purpose** (type in the `npm run backend` terminal): `ps`, `stop payments` / `start payments` (payments wait in the broker and go through when it is back), `stop co-1` (the replica takes over), `stop logistics` (orders wait for a courier and get one when it returns). The admin console's Monitoring tab shows each process going down and up. `npm run test:backend` runs these failure scenarios automatically against the real processes.
+**Breaking it on purpose** (type in the `npm run backend` or `npm run demo:local` terminal; on Docker the same cases use `kill`): `ps`, `stop payments` / `start payments` (payments wait in the broker and go through when it is back), `stop co-1` (the replica takes over), `stop logistics` (orders wait for a courier and get one when it returns). The admin console's Monitoring tab shows each process going down and up. `npm run test:backend` runs these failure scenarios automatically against the real processes.
 
 ## Simulated distributed system
 
@@ -93,7 +149,11 @@ Try it: open `/status`, set Chapinero to **Down**, then browse products and plac
 
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Start the Vite dev server |
+| `npm run demo` | The whole platform on Docker, with failure commands |
+| `npm run demo:local` | The whole platform as Node processes, with failure commands |
+| `npm run backend` / `npm run dev:live` | The backend and the live web app, in two terminals |
+| `npm run test:backend` | The 12 failure tests against the real processes |
+| `npm run dev` | Start the Vite dev server (browser-only mode) |
 | `npm run build` | Production build into `dist/` |
 | `npm run preview` | Serve the production build locally |
 | `npm run lint` | Run ESLint |
