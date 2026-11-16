@@ -397,7 +397,7 @@ Usamos routers de borde redundantes con dos proveedores de internet, firewalls d
 
 ## 8. Prototipo y pruebas
 
-El prototipo tiene cinco regiones, una por país, cada una con su propia base de datos, más una segunda instancia de Colombia, el intermediario de mensajes y los servicios de Pagos, Logística y Notificaciones. Con la app web son once procesos independientes que se comunican por red. Las cinco regiones ejecutan el mismo código y lo que cambia entre ellas es el perfil de cada país. Se puede desplegar como procesos o con Docker Compose, un contenedor por proceso. Los datos de prueba son ficticios.
+El prototipo tiene cinco regiones, una por país, cada una con su propia base de datos, más una segunda instancia de Colombia, el intermediario de mensajes y los servicios de Pagos, Logística y Notificaciones. Con la app web son once procesos independientes que se comunican por red. Las cinco regiones ejecutan el mismo código y lo que cambia entre ellas es el perfil de cada país. Se levanta con Docker Compose, un contenedor por proceso (`npm run demo`), o como procesos de Node sin Docker (`npm run demo:local`). Cada ventana de la app se conecta solo a la región de su país, y la cabecera muestra la instancia que la atiende. Los datos de prueba son ficticios.
 
 Hay dos formas de verlo. La plataforma distribuida es la que se levanta localmente con procesos o contenedores, y es la que se usa en la demostración y en las pruebas de falla. La versión publicada en Vercel es un modo de navegador que simula los nodos dentro de la página: sirve para recorrer la interfaz desde cualquier teléfono, pero no es el sistema distribuido.
 
@@ -734,7 +734,7 @@ La zona se firma con DNSSEC en el primario oculto `ns0` y se transfiere ya firma
 | Intermediario de mensajes | 1883 | TCP (MQTT) |
 | Regiones de los cinco países | 4101 a 4105 | TCP (HTTP) |
 | Réplica de Colombia | 4111 | TCP (HTTP) |
-| App web | 4173 (Docker y `vite preview`) o 5173 (`npm run dev:live`) | TCP (HTTP) |
+| App web | 4173 (Docker, `npm run demo`) o 5173 (`npm run demo:local`) | TCP (HTTP) |
 | Pagos, Logística, Notificaciones | Sin puerto propio: solo hablan con el intermediario | No aplica |
 
 ### C.8 Matriz de flujos entre zonas
@@ -882,12 +882,13 @@ Todas son de código abierto. La pasarela de pagos, la mensajería y la autorida
 
 ### D.4 Guion de la demostración
 
-1. Se abren cuatro ventanas, cada una con un rol: cliente, tienda, repartidor y administrador.
-2. El cliente hace el pedido de la sección 9 en Colombia. La tienda lo acepta y lo marca listo, se asigna un repartidor, el repartidor lo recoge y lo entrega. Cada paso aparece al instante en las otras ventanas y en los avisos.
-3. Se cambia el país a Japón: cambian el idioma, la moneda, el impuesto, el comprobante, y la propina desaparece.
-4. Se detiene el servicio de pagos y se hace otro pedido: queda esperando el pago y la tienda no puede aceptarlo. Al encender pagos, el cobro sale solo.
-5. Se detiene la región primaria de Colombia: la app sigue funcionando con la réplica, y la consola de administración marca la caída.
-6. Se cancela un pedido pagado y aparece el reembolso.
+1. `npm run demo` construye y levanta los once contenedores y espera a que todos respondan. En la misma consola, `kill <nombre>` tumba un contenedor y `start <nombre>` lo devuelve.
+2. Se abren cuatro ventanas, cada una con un rol: primero el administrador, que oye las cinco regiones, y luego cliente, tienda y repartidor.
+3. El cliente hace el pedido de la sección 9 en Colombia. La tienda lo acepta y lo marca listo, se asigna un repartidor, el repartidor lo recoge y lo entrega. Cada paso aparece al instante en las otras ventanas y en los avisos.
+4. Se cambia el país a Japón: cambian el idioma, la moneda, el impuesto, el comprobante, y la propina desaparece.
+5. Se detiene el servicio de pagos (`kill payments`) y se hace otro pedido: queda esperando el pago y la tienda no puede aceptarlo. Al encender pagos (`start payments`), el cobro sale solo.
+6. Se detiene la región primaria de Colombia (`kill co-1`): en unos segundos el indicador de la cabecera pasa de co-1 a co-2, la app sigue funcionando con la réplica y la consola de administración marca la caída.
+7. Se cancela un pedido pagado y aparece el reembolso.
 
 ### D.5 Cumplimiento del punto 7 del enunciado
 
