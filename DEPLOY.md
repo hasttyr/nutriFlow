@@ -5,8 +5,8 @@ Hay tres formas de correr el proyecto. Las tres usan el mismo código; cambia qu
 | Forma | Para qué | Backend | Requisitos |
 | --- | --- | --- | --- |
 | 1. Vercel | Enlace público para mostrar | No: todo se simula en el navegador | Nada, es automático |
-| 2. Local nativo | Sustentación y desarrollo | Sí: 11 procesos Node | Node.js 24 |
-| 3. Docker Compose | Requisito de contenedores del enunciado | Sí: 11 contenedores | Docker Desktop y virtualización activa |
+| 2. Local nativo | Desarrollo, o la sustentación sin Docker | Sí: 11 procesos Node | Node.js 24 |
+| 3. Docker Compose | Sustentación: un contenedor por proceso, como pide el enunciado | Sí: 12 contenedores | Docker Desktop y virtualización activa |
 
 ## 1. Vercel (producción)
 
@@ -22,10 +22,16 @@ npm run check      # lint + 111 pruebas + build
 npm run preview    # sirve en http://localhost:4173 lo mismo que servirá Vercel
 ```
 
-## 2. Local nativo (recomendado para la sustentación)
+## 2. Local nativo
 
 ```bash
 npm install
+npm run demo:local   # todo en una terminal: el backend y la app web en http://localhost:5173
+```
+
+Abre `http://localhost:5173/login` en cuatro pestañas y entra como cliente, tienda, repartidor y administrador. Los comandos `ps`, `stop <nombre>` y `start <nombre>` se escriben en esa misma terminal, y `web` es un proceso más de la lista. Si prefieres ver los registros de la app aparte, usa dos terminales:
+
+```bash
 npm run backend      # terminal 1: broker + 5 APIs regionales + réplica co-2 + payments, logistics, notifications
 npm run dev:live     # terminal 2: la app web conectada al backend → http://localhost:5173
 ```
@@ -56,25 +62,30 @@ Para correr los mismos escenarios automáticamente: `npm run test:backend` (12 p
 
 Devuelve `directory.json` a `127.0.0.1` al terminar (no lo subas con la IP).
 
-## 3. Docker Compose (contenedores)
+## 3. Docker Compose (recomendado para la sustentación)
 
-Requiere virtualización activa. En el PC con Ryzen: BIOS → Advanced → CPU Configuration → **SVM Mode: Enabled**, y luego instalar Docker Desktop.
+Requiere virtualización activa. En el PC con Ryzen: BIOS → Advanced → CPU Configuration → **SVM Mode: Enabled**, y luego Docker Desktop abierto hasta que diga "Engine running".
 
 ```bash
-docker compose up --build          # primera vez tarda unos minutos
-# abre http://localhost:4173
-
-docker compose ps
-docker compose stop payments       # demostración de fallos
-docker compose start payments
-docker compose stop co-1           # la web pasa a co-2
-docker compose down                # apaga todo (los volúmenes con datos se conservan)
-docker compose down -v             # apaga y borra los datos
+npm run demo        # construye y levanta los 12 contenedores, espera a que respondan y queda escuchando comandos
 ```
 
-Cada región tiene su propio volumen (`region-co`, `region-br`…): los datos personales quedan en su región.
+Abre `http://localhost:4173/login` en cuatro pestañas y entra como cliente, tienda, repartidor y administrador. Cada pestaña se conecta solo al contenedor de la región de su país, y el encabezado muestra cuál la atiende: `co-1` en verde, `co-2` en ámbar si la réplica tomó el relevo. La consola del administrador escucha las cinco regiones (`5/5 regiones`). Si cambias el país en una pestaña, esa pestaña se desconecta de la región anterior y se conecta a la nueva.
 
-> Esta forma no se ha probado todavía en una máquina con Docker. Pruébala al menos una vez antes de la sustentación.
+En la misma terminal:
+
+| Comando | Qué hace |
+| --- | --- |
+| `ps` | Los contenedores y su estado |
+| `kill payments` | Tumba el contenedor de golpe (como una caída real; el broker publica su Last Will) |
+| `start payments` | Lo vuelve a levantar |
+| `kill co-1` | Las pestañas de Colombia pasan a `co-2` |
+| `logs co-1` | Sus últimas 20 líneas |
+| `quit` o Ctrl+C | Apaga los contenedores (los volúmenes con datos se conservan) |
+
+El guion de la sección 2 sirve igual: cambia `stop` por `kill`. Los nombres de los contenedores son `broker`, `co-1`, `co-2`, `br`, `us`, `fr`, `jp`, `payments`, `logistics`, `notifications` y `web`. Para borrar también los datos: `docker compose down -v`.
+
+Cada región tiene su propio volumen (`region-co`, `region-br`…): los datos personales quedan en su región.
 
 ## Problemas comunes
 

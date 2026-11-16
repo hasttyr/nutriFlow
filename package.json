@@ -17,6 +17,8 @@
     "check": "npm run lint && npm run test && npm run build",
     "dev:live": "vite --mode live",
     "backend": "node --disable-warning=ExperimentalWarning server/start.js",
+    "demo": "node scripts/demo.mjs",
+    "demo:local": "node --disable-warning=ExperimentalWarning server/start.js --web",
     "test:backend": "node --disable-warning=ExperimentalWarning --test --test-concurrency=1 server/e2e.js"
   },
   "dependencies": {
