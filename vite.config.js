@@ -22,6 +22,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: { proxy: aiProxy },
   preview: { proxy: aiProxy },
+  // The main chunk (React, the router and the app shell) is ~570 kB minified, ~170 kB gzipped.
+  build: { chunkSizeWarningLimit: 700 },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.js'],

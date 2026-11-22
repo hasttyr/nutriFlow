@@ -12,11 +12,17 @@ const compose = (...args) => spawnSync('docker', ['compose', ...args], { stdio: 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 if (spawnSync('docker', ['info'], { stdio: 'ignore' }).status !== 0) {
-  console.error([
-    'Docker is not answering. Open Docker Desktop and wait until it says "Engine running".',
-    'If it never gets there, turn on virtualization in the BIOS (AMD: SVM Mode, Intel: VT-x).',
-    'Without Docker, "npm run demo:local" runs the same processes directly with Node.'
-  ].join('\n'));
+  const hint = process.platform === 'linux'
+    ? [
+        'Docker is not answering. Start the engine with "sudo systemctl start docker".',
+        'If it says "permission denied", add yourself to the docker group:',
+        '  sudo usermod -aG docker $USER   (then log out and back in, or run "newgrp docker")'
+      ]
+    : [
+        'Docker is not answering. Open Docker Desktop and wait until it says "Engine running".',
+        'If it never gets there, turn on virtualization in the BIOS (AMD: SVM Mode, Intel: VT-x).'
+      ];
+  console.error([...hint, 'Without Docker, "npm run demo:local" runs the same processes directly with Node.'].join('\n'));
   process.exit(1);
 }
 if (!compose('up', '--build', '--detach')) process.exit(1);

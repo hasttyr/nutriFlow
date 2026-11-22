@@ -14,7 +14,7 @@ nutriFlow te ayuda a hacer mercado donde estés. Encuentra las tiendas reales qu
 
 ## Cómo correrlo y probarlo
 
-Necesitas **Node.js 24**. Para la opción A también necesitas **Docker Desktop**. Clona el repositorio e instala las dependencias una vez:
+Necesitas **Node.js 24** (el archivo `.nvmrc` lo fija: con nvm basta `nvm use`). Para la opción A también necesitas Docker: **Docker Desktop** en Windows o macOS, o **Docker Engine con el plugin compose** en Linux (ver [En Linux](#en-linux)). Clona el repositorio e instala las dependencias una vez:
 
 ```bash
 git clone https://github.com/hasttyr/nutriFlow.git
@@ -43,6 +43,17 @@ En la misma terminal puedes escribir:
 Después de `kill co-1`, el indicador en la cabecera de una pestaña de Colombia pasa de **co-1** (verde) a **co-2** (ámbar) en unos segundos. Si prefieres no usar el script, `docker compose up --build` levanta lo mismo.
 
 Si Docker Desktop nunca llega a "Engine running", activa la virtualización en la BIOS (AMD: SVM Mode, Intel: VT-x).
+
+#### En Linux
+
+Todo corre igual que en Windows. Instala Node 24 (por ejemplo con `nvm install 24`) y, para la opción A, Docker Engine con el plugin compose (`docker compose version` debe responder). Si `npm run demo` dice que Docker no responde:
+
+```bash
+sudo systemctl start docker          # prende el motor
+sudo usermod -aG docker $USER        # usar docker sin sudo; luego cierra sesión o corre: newgrp docker
+```
+
+Los puertos que se usan son 1883, 4101–4105, 4111, 4173 y 5173; si alguno está ocupado, el proceso que lo usa falla al arrancar.
 
 ### Opción B: nativo (solo Node, sin Docker)
 
