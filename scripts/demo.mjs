@@ -25,6 +25,17 @@ if (spawnSync('docker', ['info'], { stdio: 'ignore' }).status !== 0) {
   console.error([...hint, 'Without Docker, "npm run demo:local" runs the same processes directly with Node.'].join('\n'));
   process.exit(1);
 }
+// On Linux the docker package does not bring Compose v2; it is a separate plugin.
+if (spawnSync('docker', ['compose', 'version'], { stdio: 'ignore' }).status !== 0) {
+  console.error([
+    'Docker is running but the Compose plugin ("docker compose") is missing.',
+    process.platform === 'linux'
+      ? 'Install it: Arch "sudo pacman -S docker-compose" · Debian/Ubuntu "sudo apt install docker-compose-plugin" · Fedora "sudo dnf install docker-compose-plugin"'
+      : 'Reinstall or update Docker Desktop, which includes it.',
+    'Without Docker, "npm run demo:local" runs the same processes directly with Node.'
+  ].join('\n'));
+  process.exit(1);
+}
 if (!compose('up', '--build', '--detach')) process.exit(1);
 
 const targets = [WEB, ...Object.values(directory.regions).flat().map((url) => `${url.replace('127.0.0.1', 'localhost')}/health`)];
