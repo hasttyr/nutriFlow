@@ -1,0 +1,6 @@
+# Saltos de línea LF en el repositorio y en la copia de trabajo, en Windows y en Linux:
+# la imagen de Docker se construye con la copia de trabajo, así que no debe llevar CRLF.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary
